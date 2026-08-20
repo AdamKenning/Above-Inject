@@ -7,7 +7,7 @@ JS injection for way easier list checking for analysts.
 JS injection is itself still limited but the hope is it helps. 
 (+tip: double tap ctrl for image zooming for edge - native image zooming so its way superior than the solargain image "zoom")
 
-lmk what works/doesn't for possible later changes if i cba ?
+lmk what works/doesn't for possible later changes if i cba : [Issues & Suggestions](https://outlook.office.com/mail/deeplink/compose?to=adam.kenning@abovesurveying.com&subject=AboveInject%20Feedback&body=Please%20describe%20the%20issue%20or%20suggestion%20below:)
 
 ## Setup
 
