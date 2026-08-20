@@ -1,5 +1,7 @@
 # Setup
 
+Disable or uninstall any previous JS injection extensions, as they may conflict with this version.
+
 ## 1. Get TamperMonkey
 
 Edge Store: <https://microsoftedge.microsoft.com/addons/Microsoft-Edge-Extensions-Home>

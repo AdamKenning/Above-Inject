@@ -1,5 +1,7 @@
 # Setup
 
+Disable or uninstall any previous JS injection extensions, as they may conflict with this version.
+
 ## 1. Get TamperMonkey
 
 Chrome web Store: <https://chromewebstore.google.com/>
