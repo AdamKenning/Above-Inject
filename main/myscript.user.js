@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name AboveInject
 // @namespace https://github.com/AdamKenning
-// @version 2.2.0
+// @version 2.2.1
 // @match https://analyst.abovesurveying.com/analystSurvey.php?*
 // @downloadURL https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js
 // @updateURL https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js
