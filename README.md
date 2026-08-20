@@ -1,23 +1,24 @@
 # ReadMe
 
-Current Version: 2.0.0
-
-Last Updated: 20/08/26
+Current Version: 20/08/26 - 2.0.0 (Caravanserai)
 
 ## Intro
 
-JS injection for way easier list checking for analysts. 
+JS injection for easier and more efficient list checking within Analyst Survey.
 
-JS injection is itself still limited but the hope is it helps. 
-(+tip: double tap ctrl for image zooming for edge - native image zooming so its way superior than the solargain image "zoom")
+A userscript can only do so much, but the aim is to reduce unnecessary clicks, maximise usable screen space, and improve the overall review workflow.
 
-lmk what works/doesn't for possible later changes if i cba : [Issues & Suggestions](https://outlook.office.com/mail/deeplink/compose?to=adam.kenning@abovesurveying.com&subject=AboveInject%20Feedback&body=Please%20describe%20the%20issue%20or%20suggestion%20below:)
+(+tip: double tap Ctrl while hovering an image in Edge to use the browser's native image zoom. It is significantly smoother than the built-in Solargain image zoom.)
+
+Feedback, bug reports, and feature suggestions are welcome: [Issues & Suggestions](https://outlook.office.com/mail/deeplink/compose?to=adam.kenning@abovesurveying.com&subject=AboveInject%20Feedback&body=Please%20describe%20the%20issue%20or%20suggestion%20below:)
 
 ## Setup
 
-[Setup For Edge](misc/edge/setup.md)
+Disable or uninstall any previous JS injection extensions, as they may conflict with this version.
 
-[Setup For Chrome](misc/chrome/setup.md)
+See [setup For Edge](misc/edge/setup.md)
+
+See [setup For Chrome](misc/chrome/setup.md)
 
 ## Sample Imgs
 
@@ -25,11 +26,16 @@ lmk what works/doesn't for possible later changes if i cba : [Issues & Suggestio
 ![](misc/imgs/2.png)
 ![](misc/imgs/3.png)
 
-## Update 2.0.0 (Caravanserai)
+## Updates
 
-new lore drop. with suggested features from Collegues + general QOL improvements. some columns that i didn't use but others used are back. data mode has all columns again, just reshuffled. basic dark mode (double css colour invert) switching with permanent storage. fixed width filters so columns dont resize. row heights squashed to maximise screen usage. sticky header fix for different monitors should work fine now.
+### 20/08/26 - 2.0.0 (Caravanserai)
 
-## Update 1.0.0 (Abraxas)
+Migration to centralised GitHub/Tampermonkey distribution, allowing simpler installation and future automatic updates. Includes requested features and general quality-of-life improvements. Several columns that had previously been removed have been restored based on analyst feedback. Data Mode once again displays the full dataset, with columns reorganised for improved usability.
 
-bimodal image/data. to see images as big as possible for ref checking etc, then separately to see pure data for e.g. gradient checking etc.
-also hides columns we don't care about or interact with as analysts + other stuff like maximising the view size in the monitor - no padding outside the datafram and QOL stuff like sticky headers, changing max rows to 100,500,1k (default=100 on page load)
+Added a basic dark mode option using CSS colour inversion, with the chosen preference stored between sessions. Filter widths are now fixed to prevent column resizing during use. Row heights have been reduced to maximise the amount of visible data on screen, and sticky header behaviour has been updated to provide more consistent results across different monitor sizes and resolutions.
+
+### 18/08/26 - 1.0.0 (Abraxas)
+
+Introduced a bimodal Image/Data view system. Image Mode prioritises image size and visibility for reference checking and visual review tasks. Data Mode focuses on maximising tabular information for gradient checking and other data-driven workflows.
+
+Also includes the removal of unused analyst columns, reduced page padding to maximise available workspace, sticky table headers, and expanded row count options of 100, 500, and 1000 records (defaulting to 100 on page load).
