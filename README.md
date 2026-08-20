@@ -1,5 +1,9 @@
 # ReadMe
 
+Current Version: 2.0.0
+
+Last Updated: 20/08/26
+
 ## Intro
 
 JS injection for way easier list checking for analysts. 
@@ -21,11 +25,11 @@ lmk what works/doesn't for possible later changes if i cba : [Issues & Suggestio
 ![](misc/imgs/2.png)
 ![](misc/imgs/3.png)
 
-## Update 2.0.0
+## Update 2.0.0 (Caravanserai)
 
 new lore drop. with suggested features from Collegues + general QOL improvements. some columns that i didn't use but others used are back. data mode has all columns again, just reshuffled. basic dark mode (double css colour invert) switching with permanent storage. fixed width filters so columns dont resize. row heights squashed to maximise screen usage. sticky header fix for different monitors should work fine now.
 
-## Update 1.0.0
+## Update 1.0.0 (Abraxas)
 
 bimodal image/data. to see images as big as possible for ref checking etc, then separately to see pure data for e.g. gradient checking etc.
 also hides columns we don't care about or interact with as analysts + other stuff like maximising the view size in the monitor - no padding outside the datafram and QOL stuff like sticky headers, changing max rows to 100,500,1k (default=100 on page load)
