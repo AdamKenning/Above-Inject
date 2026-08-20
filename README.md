@@ -23,7 +23,7 @@ lmk what works/doesn't for possible later changes if i cba ?
 
 ## Update 2.0.0
 
-new lore drop. with suggested features from Dilanka + general QOL improvements. some columns that i didn't use but others used are back. data mode has all columns again, just reshuffled. basic dark mode (double css colour invert) switching with permanent storage. fixed width filters so columns dont resize. row heights squashed to maximise screen usage. sticky header fix for different monitors should work fine now.
+new lore drop. with suggested features from Collegues + general QOL improvements. some columns that i didn't use but others used are back. data mode has all columns again, just reshuffled. basic dark mode (double css colour invert) switching with permanent storage. fixed width filters so columns dont resize. row heights squashed to maximise screen usage. sticky header fix for different monitors should work fine now.
 
 ## Update 1.0.0
 
