@@ -22,7 +22,7 @@ See [setup For Chrome](misc/chrome/setup.md)
 
 Updates will be checked for automatically once per day, but this can be done manually.
 
-See [Manual Updating]()
+See [Manual Updating](misc/update/update.md)
 
 ## Sample Imgs
 
