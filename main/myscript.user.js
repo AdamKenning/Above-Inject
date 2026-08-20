@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name AboveInject
 // @namespace https://github.com/AdamKenning
-// @version 2.3.0
+// @version 2.3.1
 // @match https://analyst.abovesurveying.com/analystSurvey.php?*
 // @downloadURL https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js
 // @updateURL https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js
@@ -22,8 +22,8 @@ toggleBtn.style.cssText = `
     min-width:100px;
 
     position: fixed;
-    top: 10px;
-    left: 50%;
+    top: 2px;
+    left: 25%;
     transform: translateX(-50%);
     z-index: 999999;
 `;
