@@ -147,7 +147,6 @@ const mainObserver = new MutationObserver((mutations, obs) => {
     }
 
     let darkMode = localStorage.getItem('darkMode') === 'true';
-    
 
     // =========================================================
     // Layout
@@ -210,6 +209,36 @@ const mainObserver = new MutationObserver((mutations, obs) => {
             btn.textContent =
                 imageMode ? 'Data  Mode' : 'Image Mode';
         }
+    }
+
+    // =========================================================
+    // Data checks
+    // =========================================================
+
+    function runDataChecks() {
+        document.querySelectorAll('#dataTable tbody tr').forEach(row => {
+            row.classList.remove('ak-warning');
+            const cells = row.querySelectorAll('td');
+            if (cells.length < 6) return;
+            const anomalyType = cells[1].textContent.trim();
+            const deltaTm = parseFloat(cells[5].textContent.trim());
+
+            // Hot Spot / Multiple Hot Cells < 4
+            if((anomalyType === 'Hot Spot' || anomalyType === 'Multiple Hot Cells') && !isNaN(deltaTm) && deltaTm < 4){
+                row.classList.add('ak-warning');
+            }
+
+            // Heated Junction Box < 7
+            if(anomalyType === 'Heated Junction Box' && !isNaN(deltaTm) && deltaTm < 7){
+                row.classList.add('ak-warning');
+            }
+
+            // Missing Module / Tracker should always have ΔTm = 0
+            if((anomalyType === 'Missing Module' || anomalyType === 'Tracker') && !isNaN(deltaTm) && deltaTm !== 0){
+                row.classList.add('ak-warning');
+            }
+
+        });
     }
 
     // =========================================================
@@ -289,6 +318,7 @@ const mainObserver = new MutationObserver((mutations, obs) => {
             new MutationObserver(() => {
 
                 applyLayout();
+                runDataChecks();
 
             });
 
