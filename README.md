@@ -20,11 +20,15 @@ See [setup For Edge](misc/edge/setup.md)
 
 See [setup For Chrome](misc/chrome/setup.md)
 
+Updates will be checked for automatically once per day, but this can be done manually.
+
+See [Manual Updating]()
+
 ## Sample Imgs
 
-![](misc/imgs/1.png)
-![](misc/imgs/2.png)
-![](misc/imgs/3.png)
+![](imgs/1.png)
+![](imgs/2.png)
+![](imgs/3.png)
 
 ## Updates
 
