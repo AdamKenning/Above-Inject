@@ -3,8 +3,8 @@
 // @namespace https://github.com/AdamKenning
 // @version 2.0.0
 // @match https://analyst.abovesurveying.com/analystSurvey.php?*
-// @downloadURL https://raw.githubusercontent.com/yourname/repo/main/myscript.user.js
-// @updateURL https://raw.githubusercontent.com/yourname/repo/main/myscript.user.js
+// @downloadURL https://raw.githubusercontent.com/AdamKenning/Above-Inject/blob/main/main/myscript.user.js
+// @updateURL https://raw.githubusercontent.com/AdamKenning/Above-Inject/blob/main/main/myscript.user.js
 // ==/UserScript==
 
 // =========================================================
