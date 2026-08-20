@@ -1,6 +1,6 @@
 # ReadMe
 
-Current Version: 20/08/26 - 2.0.1 (Caravanserai)
+Version: 2 (Caravanserai)
 
 ## Intro
 

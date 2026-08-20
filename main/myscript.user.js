@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name AboveInject
 // @namespace https://github.com/AdamKenning
-// @version 2.0.1
+// @version 2.0.2
 // @match https://analyst.abovesurveying.com/analystSurvey.php?*
 // @downloadURL https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js
 // @updateURL https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js
@@ -361,9 +361,9 @@ const mainObserver = new MutationObserver((mutations, obs) => {
         select.dataset.akPatched = 'true';
 
         select.innerHTML = `
-            <option value="10">100</option>
-            <option value="25">100</option>
-            <option value="50">100</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
             <option value="100">100</option>
             <option value="500">500</option>
             <option value="1000">1k</option>
