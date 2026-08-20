@@ -1,4 +1,4 @@
-# Update
+# Manually Triggering Updates
 
 To manually trigger an update, incase of new updates.
 

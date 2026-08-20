@@ -22,7 +22,7 @@ Navigate to Extension settings and click allow user scripts
 
 Link: <https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js>
 
-Paste this link into your brouser search and TamperMonkey will auto pick up on it.
+Paste this link into your brouser search and TamperMonkey will automatically intercept it
 
 ![](imgs/4.png)
 

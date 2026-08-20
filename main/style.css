@@ -1,0 +1,251 @@
+/* =========================================================
+Dark Mode
+========================================================= */
+
+html {transition: filter 0.5s ease;}
+img, video, canvas {transition: filter 0.5s ease;}
+
+html.dark-mode {filter: invert(1);}
+
+html.dark-mode img,
+html.dark-mode video,
+html.dark-mode canvas {filter: invert(1);}
+
+/* =========================================================
+GENERAL CLEANUP
+========================================================= */
+div.container-fluid.nav-fixed{padding:0;}
+h1,h2{display:none;}
+div.box-title{padding:0!important;border:0!important;margin:0!important;}
+div.box.box-bordered.box-color.teal.details{padding:0;margin:0;}
+div.box-content.defectList.dataTables_wrapper{padding:0;}
+div.col-xs-12{padding:0!important;}
+.text-right{text-align:left;}
+
+/* =========================================================
+STICKY HEADER / TABLE LOOK
+========================================================= */
+thead{
+    position:sticky;
+    top:32px;
+    background:white;
+    z-index:1050;
+}
+
+
+td{
+    outline:1px solid rgba(0,0,0,.1);
+    border:0!important;
+}
+
+#dataTable td,
+#dataTable th{
+    padding-top:0 !important;
+    padding-bottom:0 !important;
+}
+
+div.btn-group-vertical{
+    height:0!important;
+    width:40px!important;
+}
+
+/* =========================================================
+HIDE SPINNERS / BUTTON
+========================================================= */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{
+    -webkit-appearance:none;
+    margin:0;
+}
+
+#dataTable_wrapper > .row:first-child{
+    position:sticky;
+    top:0;
+    z-index:1100;
+
+    background:white;
+    min-height:32px;
+    height:32px;
+
+    padding:0 !important;
+    margin:0 !important;
+
+    display:flex;
+    align-items:center;
+}
+
+.ak-toolbar-button{
+    background:#00aba9;
+    color:#fff;
+    border:none;
+    border-radius:4px;
+    cursor:pointer;
+    padding:4px 8px;
+    min-width:100px;
+}
+
+.ak-toolbar-button:hover{background:#00918f;}
+.ak-toolbar-button:active{transform:translateY(-2px);}
+
+#tmpBtn{
+    border: 2px solid #00aba9;
+    color:#00aba9;
+    background:#fff;
+}
+
+/* =========================================================
+DATA MODE
+========================================================= */
+
+.data-priority-mode th:nth-child(1),
+.data-priority-mode td:nth-child(1){
+    width:20px!important;
+    padding-right:0!important;
+}
+
+.data-priority-mode th:nth-child(2),
+.data-priority-mode td:nth-child(2){
+    width:220px;
+}
+
+.data-priority-mode th:nth-child(3),
+.data-priority-mode td:nth-child(3),
+.data-priority-mode th:nth-child(4),
+.data-priority-mode td:nth-child(4),
+.data-priority-mode th:nth-child(5),
+.data-priority-mode td:nth-child(5),
+.data-priority-mode th:nth-child(6),
+.data-priority-mode td:nth-child(6),
+.data-priority-mode th:nth-child(7),
+.data-priority-mode td:nth-child(7),
+.data-priority-mode th:nth-child(8),
+.data-priority-mode td:nth-child(8){
+    width:60px!important;
+    padding-right:0!important;
+}
+
+.data-priority-mode th:nth-child(9),
+.data-priority-mode td:nth-child(9),
+.data-priority-mode th:nth-child(10),
+.data-priority-mode td:nth-child(10){
+    width:0!important;
+    padding:0!important;
+    overflow:hidden;
+}
+
+.data-priority-mode th:nth-child(11),
+.data-priority-mode td:nth-child(11){
+    width:auto;
+}
+
+.data-priority-mode th:nth-child(12),
+.data-priority-mode td:nth-child(12),
+.data-priority-mode th:nth-child(13),
+.data-priority-mode td:nth-child(13){
+    width:90px;
+}
+
+.data-priority-mode th:nth-child(14),
+.data-priority-mode td:nth-child(14){
+    width:300px;
+}
+
+.data-priority-mode th:nth-child(15),
+.data-priority-mode td:nth-child(15){display:none!important;}
+
+/* =========================================================
+IMAGE MODE
+========================================================= */
+
+#dataTable.image-priority-mode thead .select2-container {
+    width: 50px !important;
+    min-width: 50px !important;
+    max-width: 50px !important;
+
+    height: 30px !important;
+    min-height: 30px !important;
+    max-height: 30px !important;
+}
+
+.image-priority-mode th:nth-child(4),
+.image-priority-mode td:nth-child(4),
+.image-priority-mode th:nth-child(5),
+.image-priority-mode td:nth-child(5),
+.image-priority-mode th:nth-child(7),
+.image-priority-mode td:nth-child(7),
+.image-priority-mode th:nth-child(8),
+.image-priority-mode td:nth-child(8),
+.image-priority-mode th:nth-child(13),
+.image-priority-mode td:nth-child(13),
+.image-priority-mode th:nth-child(14),
+.image-priority-mode td:nth-child(14){
+    display:none!important;
+}
+
+.image-priority-mode th:nth-child(1),
+.image-priority-mode td:nth-child(1),
+.image-priority-mode th:nth-child(2),
+.image-priority-mode td:nth-child(2),
+.image-priority-mode th:nth-child(6),
+.image-priority-mode td:nth-child(6){
+    width:20px!important;
+    padding-right:0!important;
+}
+
+.image-priority-mode th:nth-child(3),
+.image-priority-mode td:nth-child(3){
+    width:20px!important;
+    padding-right:0!important;
+}
+
+.image-priority-mode th:nth-child(11),
+.image-priority-mode td:nth-child(11){
+    width:60px!important;
+    padding-right:0!important;
+}
+
+.image-priority-mode th:nth-child(12),
+.image-priority-mode td:nth-child(12){
+    width:20px!important;
+    padding-right:0!important;
+}
+
+.image-priority-mode th:nth-child(9),
+.image-priority-mode td:nth-child(9),
+.image-priority-mode th:nth-child(10),
+.image-priority-mode td:nth-child(10){
+    width:500px!important;
+    min-width:500px!important;
+}
+
+.image-priority-mode{
+    table-layout:auto!important;
+    width:100%!important;
+}
+
+.image-priority-mode td:nth-child(9),
+.image-priority-mode td:nth-child(10){
+    width:45%!important;
+}
+
+.image-priority-mode td:nth-child(9) img,
+.image-priority-mode td:nth-child(10) img{
+    width:100%!important;
+    height:auto!important;
+    max-width:none!important;
+    max-height:none!important;
+}
+
+.image-priority-mode th:nth-child(4),
+.image-priority-mode td:nth-child(4){
+    width:60px!important;
+    min-width:60px!important;
+    max-width:60px!important;
+}
+
+.image-priority-mode th:nth-child(12),
+.image-priority-mode td:nth-child(12){
+    width:70px!important;
+    min-width:70px!important;
+    max-width:70px!important;
+}

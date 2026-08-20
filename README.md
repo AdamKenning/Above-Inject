@@ -2,6 +2,8 @@
 
 Version: 2 (Caravanserai)
 
+Requires: TamperMonkey Edge/Chrome Extension 
+
 ## Intro
 
 JS injection for easier and more efficient list checking within Analyst Survey.
@@ -20,7 +22,7 @@ See [setup For Edge](misc/edge/setup.md)
 
 See [setup For Chrome](misc/chrome/setup.md)
 
-Updates will be checked for automatically once per day, but this can be done manually.
+Updates will be checked for automatically once per day, but this can triggered manually.
 
 See [Manual Updating](misc/update/update.md)
 
