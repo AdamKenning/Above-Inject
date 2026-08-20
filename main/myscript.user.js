@@ -361,9 +361,12 @@ const mainObserver = new MutationObserver((mutations, obs) => {
         select.dataset.akPatched = 'true';
 
         select.innerHTML = `
+            <option value="10">100</option>
+            <option value="25">100</option>
+            <option value="50">100</option>
             <option value="100">100</option>
             <option value="500">500</option>
-            <option value="1000">1000</option>
+            <option value="1000">1k</option>
         `;
 
         select.value = '100';
