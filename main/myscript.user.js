@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.3.7
+// @version      2.3.8
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -17,7 +17,6 @@
 // ==/UserScript==
 
 const VERSION = GM_info.script.version;
-console.log("Current Version: ", VERSION)
 
 const toggleBtn = document.createElement('button');
 toggleBtn.textContent = localStorage.getItem('disableInject') === 'true' ? 'Enable Above-Inject' : 'Disable Above-Inject';
@@ -135,13 +134,19 @@ if(localStorage.getItem('disableInject') !== 'true'){
         // Layout
         // =========================================================
 
-        async function checkForUpdates() {
+        async function checkForUpdates(){
             try{
-                const response = await fetch('https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js');
+                const response = await fetch(
+                    'https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js?t=' + Date.now(), {cache: 'no-store'}
+                );
                 const text = await response.text();
                 const match = text.match(/@version\s+([0-9.]+)/);
                 if (!match) return;
                 const githubVersion = match[1];
+
+                console.log("Installed:", VERSION);
+                console.log("GitHub:", githubVersion);
+
                 const btn = document.createElement('button');
                 btn.style.cssText = `
                     background: #ffffff;
