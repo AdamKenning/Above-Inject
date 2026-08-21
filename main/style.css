@@ -5,11 +5,14 @@ Dark Mode
 html {transition: filter 0.5s ease;}
 img, video, canvas {transition: filter 0.5s ease;}
 
+
 html.dark-mode {filter: invert(1);}
 
+/*
 html.dark-mode img,
 html.dark-mode video,
 html.dark-mode canvas {filter: invert(1);}
+*/
 
 /* =========================================================
 GENERAL CLEANUP
@@ -182,13 +185,10 @@ DATA MODE
     width:90px;
 }
 
-
-
 .data-priority-mode th:nth-child(15),
 .data-priority-mode td:nth-child(15){
     width:200px;
 }
-
 
 .data-priority-mode .btn-group-vertical {
     display: flex !important;
@@ -197,7 +197,6 @@ DATA MODE
     margin:0px !important;
     padding:0px !important;
 }
-
 
 /* =========================================================
 IMAGE MODE
