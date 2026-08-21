@@ -53,6 +53,15 @@ div.btn-group-vertical{
     width:40px!important;
 }
 
+.modal {
+    z-index: 10550 !important;
+}
+
+.modal-backdrop {
+    display:none;
+    z-index: -10540 !important;
+}
+
 /* =========================================================
 HIDE SPINNERS / BUTTON
 ========================================================= */
