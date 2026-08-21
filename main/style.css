@@ -5,7 +5,6 @@ Dark Mode
 html {transition: filter 0.5s ease;}
 img, video, canvas {transition: filter 0.5s ease;}
 
-
 html.dark-mode {filter: invert(1);}
 
 html.dark-mode img,
