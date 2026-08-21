@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.4.4
+// @version      2.4.5
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -173,6 +173,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
 
                 if(githubVersion !== VERSION){
                     btn.textContent = `v${VERSION} \u2794 v${githubVersion}`;
+                    btn.title = `Installed: ${VERSION}\nLatest:     ${githubVersion}\nClick to update`;
 
                     if(!isPatchOnly){
                         btn.style.background = '#ff4444';
@@ -186,6 +187,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
                     btn.onclick = () => {window.open('https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js','_blank');};
                 }else{
                     btn.textContent = `v${VERSION}`;
+                    btn.title = `Installed: ${VERSION}\nLatest:     ${githubVersion}\nNo new updates`;
                     btn.style.background = '#aaaaaa';
                     btn.style.color = '#000000';
                 }
