@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.3.3
+// @version      2.3.4
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -32,7 +32,7 @@ toggleBtn.style.cssText = `
 
     position: fixed;
     top: 2px;
-    left: 25%;
+    left: 15%;
     transform: translateX(-50%);
     z-index: 999999;
 `;
@@ -144,8 +144,8 @@ if(localStorage.getItem('disableInject') !== 'true'){
                 const githubVersion = match[1];
                 const btn = document.createElement('button');
                 btn.style.cssText = `
-                    background:#ff0000;
-                    color:#000000;
+                    background: #ffffff;
+                    color: #000000;
                     border: 2px solid #000000;
                     border-radius:4px;
                     cursor:pointer;
@@ -154,20 +154,20 @@ if(localStorage.getItem('disableInject') !== 'true'){
 
                     position: fixed;
                     top: 2px;
-                    left: calc(25% + 140px);
+                    left: calc(15% + 140px);
                     transform: translateX(-50%);
                     z-index: 999999;
                 `;
 
                 if(githubVersion !== VERSION){
-                    btn.textContent = `AboveInject v${VERSION}`;
+                    btn.textContent = `v${VERSION} -> v${githubVersion}`;
                     btn.style.background = '#ff4444';
                     btn.style.color = '#fff';
                     btn.onclick = () => {window.open('https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js','_blank');};
                 }else{
                     btn.textContent = `v${VERSION}`;
-                    btn.style.background = '#4caf50';
-                    btn.style.color = '#fff';
+                    btn.style.background = '#ffffff';
+                    btn.style.color = '#000000';
                 }
 
                 document.body.appendChild(btn);
