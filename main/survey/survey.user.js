@@ -1,18 +1,19 @@
 // ==UserScript==
-// @name         AboveInject
+// @name         SurveyInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.3.2
+// @version      2.3.1
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
 // @match        https://analyst.abovesurveying.com/analystSurvey.php?*
 // @icon         https://analyst.abovesurveying.com/img/logo@2x.png
 
-// @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css
-// @grant GM_getResourceText
+// @resource     mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey.css
 
-// @downloadURL https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js
-// @updateURL   https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js
+// @grant        GM_getResourceText
+
+// @downloadURL  https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey/survey.user.js
+// @updateURL    https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey/survey.user.js
 // ==/UserScript==
 
 const toggleBtn = document.createElement('button');
