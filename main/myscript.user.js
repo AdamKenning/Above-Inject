@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.4.0
+// @version      2.4.1
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
