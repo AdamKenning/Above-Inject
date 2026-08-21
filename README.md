@@ -24,7 +24,7 @@ See [setup For Chrome](misc/chrome/setup.md)
 
 Updates will be checked for automatically once per day, but this can triggered manually.
 
-See [Manual Updating](misc/update/update.md)
+![](imgs/4.png)
 
 ## Sample Imgs
 

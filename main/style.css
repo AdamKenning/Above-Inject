@@ -78,10 +78,22 @@ input[type=number]::-webkit-outer-spin-button{
     align-items:center;
 }
 
+
+#tmpBtn{
+    color:#00aba9;
+    background:#fff;
+    border: 2px solid #00aba9;
+
+    border-radius:4px;
+    padding:4px 8px;
+    min-width:100px;
+}
+
 .ak-toolbar-button{
-    background:#00aba9;
     color:#fff;
-    border:none;
+    background:#00aba9;
+    border:2px solid #00aba9;
+
     border-radius:4px;
     cursor:pointer;
     padding:4px 8px;
@@ -90,12 +102,6 @@ input[type=number]::-webkit-outer-spin-button{
 
 .ak-toolbar-button:hover{background:#00918f;}
 .ak-toolbar-button:active{transform:translateY(-2px);}
-
-#tmpBtn{
-    border: 2px solid #00aba9;
-    color:#00aba9;
-    background:#fff;
-}
 
 /* =========================================================
 DATA MODE

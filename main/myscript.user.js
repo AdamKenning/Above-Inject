@@ -15,7 +15,7 @@ toggleBtn.textContent = localStorage.getItem('disableInject') === 'true' ? 'Enab
 toggleBtn.style.cssText = `
     background:#ffffff;
     color:#000000;
-    border:none;
+    border: 2px solid #000000;
     border-radius:4px;
     cursor:pointer;
     padding:4px 8px;
