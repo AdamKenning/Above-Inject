@@ -176,17 +176,28 @@ DATA MODE
 .data-priority-mode th:nth-child(12),
 .data-priority-mode td:nth-child(12),
 .data-priority-mode th:nth-child(13),
-.data-priority-mode td:nth-child(13){
+.data-priority-mode td:nth-child(13),
+.data-priority-mode th:nth-child(14),
+.data-priority-mode td:nth-child(14){
     width:90px;
 }
 
-.data-priority-mode th:nth-child(14),
-.data-priority-mode td:nth-child(14){
-    width:300px;
-}
+
 
 .data-priority-mode th:nth-child(15),
-.data-priority-mode td:nth-child(15){display:none!important;}
+.data-priority-mode td:nth-child(15){
+    width:200px;
+}
+
+
+.data-priority-mode .btn-group-vertical {
+    display: flex !important;
+    flex-direction: row !important;
+    height:35px !important;
+    margin:0px !important;
+    padding:0px !important;
+}
+``
 
 /* =========================================================
 IMAGE MODE
@@ -283,4 +294,9 @@ IMAGE MODE
     width:70px!important;
     min-width:70px!important;
     max-width:70px!important;
+}
+
+.image-priority-mode .btn-group-vertical {
+    display: flex !important;
+    flex-direction: column !important;
 }
