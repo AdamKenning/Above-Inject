@@ -22,7 +22,7 @@ See [setup For Edge](misc/edge/setup.md)
 
 See [setup For Chrome](misc/chrome/setup.md)
 
-Updates will be checked for automatically once per day, but this can triggered manually.
+To update your local instance of the script for new features, click to check for updates here
 
 ![](imgs/4.png)
 
@@ -32,11 +32,11 @@ Updates will be checked for automatically once per day, but this can triggered m
 ![](imgs/2.png)
 ![](imgs/3.png)
 
-## Updates
+## Major Updates
 
 ### 20/08/26 - 2.0.0 (Caravanserai)
 
-Migration to centralised GitHub/Tampermonkey distribution, allowing simpler installation and future automatic updates. Includes requested features and general quality-of-life improvements. Several columns that had previously been removed have been restored based on analyst feedback. Data Mode once again displays the full dataset, with columns reorganised for improved usability.
+Migration to centralised GitHub/Tampermonkey distribution, allowing simpler installation and future easy update roll outs. Includes requested features and general quality-of-life improvements. Several columns that had previously been removed have been restored based on analyst feedback. Data Mode once again displays the full dataset, with columns reorganised for improved usability.
 
 Added a basic dark mode option using CSS colour inversion, with the chosen preference stored between sessions. Filter widths are now fixed to prevent column resizing during use. Row heights have been reduced to maximise the amount of visible data on screen, and sticky header behaviour has been updated to provide more consistent results across different monitor sizes and resolutions.
 
