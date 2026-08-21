@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.5.0
+// @version      2.5.1
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -220,7 +220,9 @@ if(localStorage.getItem('disableInject') !== 'true'){
                     img.style.transform = 'scale(1)';
                 });
 
+
                 container.addEventListener('wheel', e => {
+                    if (!e.ctrlKey) return;
                     e.preventDefault();
                     if (e.deltaY < 0){imageZoomLevel = Math.min(imageZoomLevel + 1, 3);}
                     else{imageZoomLevel = Math.max(imageZoomLevel - 1, 0);}
