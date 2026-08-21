@@ -9,3 +9,9 @@
 // @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/automap/sg_am.css
 // @grant GM_getResourceText
 // ==/UserScript==
+
+const css = GM_getResourceText("mainCss");
+const style = document.createElement("style");
+
+style.textContent = css;
+document.head.appendChild(style);
