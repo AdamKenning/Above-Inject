@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.5.1
+// @version      2.5.2
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -228,7 +228,10 @@ if(localStorage.getItem('disableInject') !== 'true'){
                     else{imageZoomLevel = Math.max(imageZoomLevel - 1, 0);}
                     localStorage.setItem('imageZoomLevel',imageZoomLevel);
                     const zoomBtn = document.querySelector('#zoomLevelBtn');
-                    if (zoomBtn) {zoomBtn.textContent = ['Zoom Off', 'Zoom 2x', 'Zoom 4x', 'Zoom 8x'][imageZoomLevel];}
+                    if (zoomBtn) {
+                        zoomBtn.textContent = ['Zoom Off', 'Zoom 2x', 'Zoom 4x', 'Zoom 8x'][imageZoomLevel];
+                        zoomBtn.title = 'Ctrl + Mouse Wheel over image zoom';
+                    }
                     img.style.transform = `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
                 }, { passive: false });
 
@@ -261,7 +264,10 @@ if(localStorage.getItem('disableInject') !== 'true'){
 
             const zoomBtn = document.querySelector('#zoomLevelBtn');
             const labels = ['Zoom Off', 'Zoom 2x', 'Zoom 4x', 'Zoom 8x'];
-            if(zoomBtn){zoomBtn.textContent =labels[imageZoomLevel];}
+            if(zoomBtn){
+                zoomBtn.textContent =labels[imageZoomLevel];
+                zoomBtn.title = 'Ctrl + Mouse Wheel over image to zoom';
+            }
 
         }
 
