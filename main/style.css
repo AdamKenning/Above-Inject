@@ -8,11 +8,9 @@ img, video, canvas {transition: filter 0.5s ease;}
 
 html.dark-mode {filter: invert(1);}
 
-/*
 html.dark-mode img,
 html.dark-mode video,
 html.dark-mode canvas {filter: invert(1);}
-*/
 
 /* =========================================================
 GENERAL CLEANUP
