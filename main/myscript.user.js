@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.3.2
+// @version      2.3.3
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -10,10 +10,14 @@
 
 // @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css
 // @grant GM_getResourceText
+// @grant GM_info
 
 // @downloadURL https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js
 // @updateURL   https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js
 // ==/UserScript==
+
+const VERSION = GM_info.script.version;
+console.log("Current Version" = VERSION)
 
 const toggleBtn = document.createElement('button');
 toggleBtn.textContent = localStorage.getItem('disableInject') === 'true' ? 'Enable Above-Inject' : 'Disable Above-Inject';
@@ -37,13 +41,8 @@ toggleBtn.addEventListener('click', () => {
     localStorage.setItem('disableInject', (!disabled).toString());
     location.reload();
 });
-if (document.body) {
-    document.body.appendChild(toggleBtn);
-} else {
-    window.addEventListener('DOMContentLoaded', () => {
-        document.body.appendChild(toggleBtn);
-    });
-}
+if (document.body) {document.body.appendChild(toggleBtn);}
+else {window.addEventListener('DOMContentLoaded', () => {document.body.appendChild(toggleBtn);});}
 
 
 if(localStorage.getItem('disableInject') !== 'true'){
@@ -136,6 +135,49 @@ if(localStorage.getItem('disableInject') !== 'true'){
         // Layout
         // =========================================================
 
+        async function checkForUpdates() {
+            try{
+                const response = await fetch('https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js');
+                const text = await response.text();
+                const match = text.match(/@version\s+([0-9.]+)/);
+                if (!match) return;
+                const githubVersion = match[1];
+                const btn = document.createElement('button');
+                btn.style.cssText = `
+                    background:#ff0000;
+                    color:#000000;
+                    border: 2px solid #000000;
+                    border-radius:4px;
+                    cursor:pointer;
+                    padding:4px 8px;
+                    min-width:100px;
+
+                    position: fixed;
+                    top: 2px;
+                    left: calc(25% + 140px);
+                    transform: translateX(-50%);
+                    z-index: 999999;
+                `;
+
+                if(githubVersion !== VERSION){
+                    btn.textContent = `AboveInject v${VERSION}`;
+                    btn.style.background = '#ff4444';
+                    btn.style.color = '#fff';
+                    btn.onclick = () => {window.open('https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js','_blank');};
+                }else{
+                    btn.textContent = `v${VERSION}`;
+                    btn.style.background = '#4caf50';
+                    btn.style.color = '#fff';
+                }
+
+                document.body.appendChild(btn);
+
+            } catch (err) {
+                console.error('Version check failed', err);
+            }
+        }
+
+
         function applyDarkMode() {
             document.documentElement.classList.toggle('dark-mode',darkMode);
             const btn = document.querySelector('#darkModeBtn');
@@ -196,6 +238,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
         applyLayout();
         applyDarkMode();
         runDataChecks();
+        checkForUpdates();
 
         const imageButton = document.querySelector('#imageModeBtn');
         if(imageButton && !imageButton.dataset.akBound){
