@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.3.9
+// @version      2.3.10
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -19,7 +19,7 @@
 const VERSION = GM_info.script.version;
 
 const toggleBtn = document.createElement('button');
-toggleBtn.textContent = localStorage.getItem('disableInject') === 'true' ? 'Enable Above-Inject' : 'Disable Above-Inject';
+toggleBtn.textContent = localStorage.getItem('disableInject') === 'true' ? 'Enable Inject' : 'Disable Inject';
 toggleBtn.style.cssText = `
     background: #aaaaaa;
     color: #000000;
@@ -43,6 +43,7 @@ toggleBtn.addEventListener('click', () => {
 });
 if (document.body) {document.body.appendChild(toggleBtn);}
 else {window.addEventListener('DOMContentLoaded', () => {document.body.appendChild(toggleBtn);});}
+
 
 
 if(localStorage.getItem('disableInject') !== 'true'){
@@ -148,10 +149,15 @@ if(localStorage.getItem('disableInject') !== 'true'){
                 console.log("Installed:", VERSION);
                 console.log("GitHub:", githubVersion);
 
+                const current = VERSION.split('.').map(Number);
+                const latest = githubVersion.split('.').map(Number);
+                const isPatchOnly = current[0] === latest[0] && current[1] === latest[1] && current[2] !== latest[2];
+
+
+
+
                 const btn = document.createElement('button');
                 btn.style.cssText = `
-                    background: #aaaaaa;
-                    color: #000000;
                     border: 2px solid #000000;
                     border-radius:4px;
                     cursor:pointer;
@@ -166,23 +172,25 @@ if(localStorage.getItem('disableInject') !== 'true'){
                 `;
 
                 if(githubVersion !== VERSION){
-                    btn.textContent = `v${VERSION} -> v${githubVersion}`;
-                    btn.style.background = '#ff4444';
-                    btn.style.color = '#fff';
+                    btn.textContent = `v${VERSION} \u2794 v${githubVersion}`;
 
-                    btn.classList.add('ak-update-available');
+                    if(!isPatchOnly){
+                        btn.style.background = '#ff4444';
+                        btn.style.color = '#fff';
+                        btn.classList.add('ak-update-available');
+                    }else{
+                        btn.style.background = '#aaaaaa';
+                        btn.style.color = '#000000';
+                    }
+
                     btn.onclick = () => {window.open('https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js','_blank');};
                 }else{
                     btn.textContent = `v${VERSION}`;
                     btn.style.background = '#aaaaaa';
                     btn.style.color = '#000000';
                 }
-
                 document.body.appendChild(btn);
-
-            } catch (err) {
-                console.error('Version check failed', err);
-            }
+            }catch (err){console.error('Version check failed', err);}
         }
 
 
