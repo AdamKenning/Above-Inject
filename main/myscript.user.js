@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.3.4
+// @version      2.3.5
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -17,7 +17,7 @@
 // ==/UserScript==
 
 const VERSION = GM_info.script.version;
-console.log("Current Version" = VERSION)
+console.log("Current Version:", VERSION)
 
 const toggleBtn = document.createElement('button');
 toggleBtn.textContent = localStorage.getItem('disableInject') === 'true' ? 'Enable Above-Inject' : 'Disable Above-Inject';
