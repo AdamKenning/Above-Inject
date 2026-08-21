@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.4.5
+// @version      2.5.0
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
 // @match        https://analyst.abovesurveying.com/analystSurvey.php?*
 // @icon         https://analyst.abovesurveying.com/img/logo@2x.png
 
-// @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css?v=2.4.4
+// @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css?v=2.5.0
 // @grant GM_getResourceText
 // @grant GM_info
 
@@ -92,7 +92,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
             ">
                 <button class="ak-toolbar-button" id="imageModeBtn"> </button>
                 <button class="ak-toolbar-button" id="darkModeBtn"> </button>
-                <button class="ak-toolbar-button" id="tmpBtn"> feature 3? </button>
+                <button class="ak-toolbar-button" id="zoomLevelBtn"> feature 3? </button>
                 <button class="ak-toolbar-button" id="tmpBtn"> feature 4? </button>
                 <button class="ak-toolbar-button" id="tmpBtn"> feature 5? </button>
             </div>
@@ -131,6 +131,8 @@ if(localStorage.getItem('disableInject') !== 'true'){
         let imageMode = localStorage.getItem('imagePriorityMode') === 'true';
         if(localStorage.getItem('darkMode') === null){localStorage.setItem('darkMode', 'true');}
         let darkMode = localStorage.getItem('darkMode') === 'true';
+        if(localStorage.getItem('imageZoomLevel') === null){localStorage.setItem('imageZoomLevel', '0');}
+        let imageZoomLevel = Number(localStorage.getItem('imageZoomLevel'));
 
         // =========================================================
         // Layout
@@ -195,6 +197,43 @@ if(localStorage.getItem('disableInject') !== 'true'){
             }catch (err){console.error('Version check failed', err);}
         }
 
+        function bindImageZoom(){
+            document.querySelectorAll('#dataTable .thumbnail img').forEach(img => {
+                if (img.dataset.zoomBound) return;
+                img.dataset.zoomBound = 'true';
+                const container = img.closest('.thumbnail');
+                container.addEventListener('mousemove', e => {
+                    const rect = container.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    if(imageZoomLevel === 0){
+                        img.style.transform = 'scale(1)';
+                        return;
+                    }
+
+                    const scales = [1, 2, 4, 8];
+                    img.style.transformOrigin = `${x}% ${y}%`;
+                    img.style.transform = `scale(${scales[imageZoomLevel]})`;
+                });
+                container.addEventListener('mouseleave', () => {
+                    img.style.transformOrigin = 'center center';
+                    img.style.transform = 'scale(1)';
+                });
+
+                container.addEventListener('wheel', e => {
+                    e.preventDefault();
+                    if (e.deltaY < 0){imageZoomLevel = Math.min(imageZoomLevel + 1, 3);}
+                    else{imageZoomLevel = Math.max(imageZoomLevel - 1, 0);}
+                    localStorage.setItem('imageZoomLevel',imageZoomLevel);
+                    const zoomBtn = document.querySelector('#zoomLevelBtn');
+                    if (zoomBtn) {zoomBtn.textContent = ['Zoom Off', 'Zoom 2x', 'Zoom 4x', 'Zoom 8x'][imageZoomLevel];}
+                    img.style.transform = `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
+                }, { passive: false });
+
+            });
+
+        }
+
 
         function applyDarkMode() {
             document.documentElement.classList.toggle('dark-mode',darkMode);
@@ -217,6 +256,11 @@ if(localStorage.getItem('disableInject') !== 'true'){
 
             const btn = document.querySelector('#imageModeBtn');
             if (btn){btn.textContent =imageMode ? 'Data  Mode' : 'Image Mode';}
+
+            const zoomBtn = document.querySelector('#zoomLevelBtn');
+            const labels = ['Zoom Off', 'Zoom 2x', 'Zoom 4x', 'Zoom 8x'];
+            if(zoomBtn){zoomBtn.textContent =labels[imageZoomLevel];}
+
         }
 
         // =========================================================
@@ -257,6 +301,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
         applyDarkMode();
         runDataChecks();
         checkForUpdates();
+        bindImageZoom();
 
         const imageButton = document.querySelector('#imageModeBtn');
         if(imageButton && !imageButton.dataset.akBound){
@@ -289,6 +334,16 @@ if(localStorage.getItem('disableInject') !== 'true'){
             });
         }
 
+        const zoomButton = document.querySelector('#zoomLevelBtn');
+            if(zoomButton && !zoomButton.dataset.akBound){
+                zoomButton.dataset.akBound = 'true';
+                zoomButton.addEventListener('click', () => {
+                    imageZoomLevel = (imageZoomLevel + 1) % 4;
+                    localStorage.setItem('imageZoomLevel',imageZoomLevel);
+                    applyLayout();
+                });
+            }
+
         // =========================================================
         // Monitor Table Changes
         // =========================================================
@@ -296,11 +351,11 @@ if(localStorage.getItem('disableInject') !== 'true'){
         const tbody = table.querySelector('tbody');
 
         if (tbody) {
-            const tbodyObserver =
-                  new MutationObserver(() => {
-                      applyLayout();
-                      runDataChecks();
-                  });
+            const tbodyObserver = new MutationObserver(() => {
+                applyLayout();
+                runDataChecks();
+                bindImageZoom();
+            });
 
             tbodyObserver.observe(tbody, {
                 childList: true,

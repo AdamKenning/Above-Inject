@@ -78,6 +78,16 @@ div.btn-group-vertical{
     z-index: -10540 !important;
 }
 
+.thumbnail {
+    overflow: hidden !important;
+    position: relative;
+}
+
+.thumbnail img {
+    transition: transform 0.4s ease;
+    transform-origin: center center;
+}
+
 /* =========================================================
 HIDE SPINNERS / BUTTON
 ========================================================= */
