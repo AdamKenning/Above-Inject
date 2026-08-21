@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.3.8
+// @version      2.3.9
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -21,9 +21,10 @@ const VERSION = GM_info.script.version;
 const toggleBtn = document.createElement('button');
 toggleBtn.textContent = localStorage.getItem('disableInject') === 'true' ? 'Enable Above-Inject' : 'Disable Above-Inject';
 toggleBtn.style.cssText = `
-    background:#ffffff;
-    color:#000000;
+    background: #aaaaaa;
+    color: #000000;
     border: 2px solid #000000;
+
     border-radius:4px;
     cursor:pointer;
     padding:4px 8px;
@@ -149,7 +150,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
 
                 const btn = document.createElement('button');
                 btn.style.cssText = `
-                    background: #ffffff;
+                    background: #aaaaaa;
                     color: #000000;
                     border: 2px solid #000000;
                     border-radius:4px;
@@ -173,7 +174,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
                     btn.onclick = () => {window.open('https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js','_blank');};
                 }else{
                     btn.textContent = `v${VERSION}`;
-                    btn.style.background = '#ffffff';
+                    btn.style.background = '#aaaaaa';
                     btn.style.color = '#000000';
                 }
 
