@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AutomapInject
 // @namespace    https://github.com/AdamKenning
-// @version      0.0.1
+// @version      0.0.2
 // @description  Feature addition / QOL changes to the Automap page of Solargain
 // @author       Adam K
 

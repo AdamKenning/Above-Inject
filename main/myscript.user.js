@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.5.4
+// @version      2.5.5
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
 // @match        https://analyst.abovesurveying.com/analystSurvey.php?*
 // @icon         https://analyst.abovesurveying.com/img/logo@2x.png
 
-// @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css?v=2.5.0
+// @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css?v=2.5.5
 // @grant GM_getResourceText
 // @grant GM_info
 
@@ -16,36 +16,98 @@
 // @updateURL   https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js
 // ==/UserScript==
 
-const VERSION = GM_info.script.version;
+// Kill Switch
+function addKillSwitch(){
+    const toggleBtn = document.createElement('button');
+    toggleBtn.textContent = localStorage.getItem('disableInject') === 'true' ? 'Enable Inject' : 'Disable Inject';
+    toggleBtn.style.cssText = `
+        background: #aaaaaa;
+        color: #000000;
+        border: 2px solid #000000;
 
-const toggleBtn = document.createElement('button');
-toggleBtn.textContent = localStorage.getItem('disableInject') === 'true' ? 'Enable Inject' : 'Disable Inject';
-toggleBtn.style.cssText = `
-    background: #aaaaaa;
-    color: #000000;
-    border: 2px solid #000000;
+        border-radius:4px;
+        cursor:pointer;
+        padding:4px 8px;
+        min-width:100px;
 
-    border-radius:4px;
-    cursor:pointer;
-    padding:4px 8px;
-    min-width:100px;
-
-    position: fixed;
-    top: 2px;
-    left: 15%;
-    transform: translateX(-50%);
-    z-index: 999999;
-`;
-toggleBtn.addEventListener('click', () => {
-    const disabled = localStorage.getItem('disableInject') === 'true';
-    localStorage.setItem('disableInject', (!disabled).toString());
-    location.reload();
-});
-if (document.body) {document.body.appendChild(toggleBtn);}
-else {window.addEventListener('DOMContentLoaded', () => {document.body.appendChild(toggleBtn);});}
+        position: fixed;
+        top: 2px;
+        left: 15%;
+        transform: translateX(-50%);
+        z-index: 999999;
+    `;
+    toggleBtn.addEventListener('click', () => {
+        const disabled = localStorage.getItem('disableInject') === 'true';
+        localStorage.setItem('disableInject', (!disabled).toString());
+        location.reload();
+    });
+    if (document.body) {document.body.appendChild(toggleBtn);}
+    else {window.addEventListener('DOMContentLoaded', () => {document.body.appendChild(toggleBtn);});}
+}
+addKillSwitch()
 
 
+// Version info
+async function checkForUpdates(){
+    const VERSION = GM_info.script.version;
+    try{
+        const response = await fetch(
+            'https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js?t=' + Date.now(), {cache: 'no-store'}
+        );
+        const text = await response.text();
+        const match = text.match(/@version\s+([0-9.]+)/);
+        if (!match) return;
+        const githubVersion = match[1];
 
+        console.log("Installed:", VERSION);
+        console.log("GitHub:", githubVersion);
+
+        const current = VERSION.split('.').map(Number);
+        const latest = githubVersion.split('.').map(Number);
+        const isPatchOnly = current[0] === latest[0] && current[1] === latest[1] && current[2] !== latest[2];
+
+        const btn = document.createElement('button');
+        btn.style.cssText = `
+                    border: 2px solid #000000;
+                    border-radius:4px;
+                    cursor:pointer;
+                    padding:4px 8px;
+                    min-width:100px;
+
+                    position: fixed;
+                    top: 2px;
+                    left: calc(15% + 140px);
+                    transform: translateX(-50%);
+                    z-index: 999999;
+                `;
+
+        if(githubVersion !== VERSION){
+            btn.textContent = `v${VERSION} \u2794 v${githubVersion}`;
+            btn.title = `Installed: ${VERSION}\nLatest:     ${githubVersion}\nClick to update`;
+
+            if(!isPatchOnly){
+                btn.style.background = '#ff4444';
+                btn.style.color = '#fff';
+                btn.classList.add('ak-update-available');
+            }else{
+                btn.style.background = '#aaaaaa';
+                btn.style.color = '#000000';
+            }
+
+            btn.onclick = () => {window.open('https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js','_blank');};
+        }else{
+            btn.textContent = `v${VERSION}`;
+            btn.title = `Installed: ${VERSION}\nLatest:     ${githubVersion}\nNo new updates`;
+            btn.style.background = '#aaaaaa';
+            btn.style.color = '#000000';
+        }
+        if (document.body){document.body.appendChild(btn);}
+        else{window.addEventListener('DOMContentLoaded', () => {document.body.appendChild(btn);});}
+    }catch (err){console.error('Version check failed', err);}
+}
+checkForUpdates();
+
+// Main Logic
 if(localStorage.getItem('disableInject') !== 'true'){
     const css = GM_getResourceText("mainCss");
     const style = document.createElement("style");
@@ -135,64 +197,8 @@ if(localStorage.getItem('disableInject') !== 'true'){
         let imageZoomLevel = Number(localStorage.getItem('imageZoomLevel'));
 
         // =========================================================
-        // Layout
+        // Features
         // =========================================================
-
-        async function checkForUpdates(){
-            try{
-                const response = await fetch(
-                    'https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js?t=' + Date.now(), {cache: 'no-store'}
-                );
-                const text = await response.text();
-                const match = text.match(/@version\s+([0-9.]+)/);
-                if (!match) return;
-                const githubVersion = match[1];
-
-                console.log("Installed:", VERSION);
-                console.log("GitHub:", githubVersion);
-
-                const current = VERSION.split('.').map(Number);
-                const latest = githubVersion.split('.').map(Number);
-                const isPatchOnly = current[0] === latest[0] && current[1] === latest[1] && current[2] !== latest[2];
-
-                const btn = document.createElement('button');
-                btn.style.cssText = `
-                    border: 2px solid #000000;
-                    border-radius:4px;
-                    cursor:pointer;
-                    padding:4px 8px;
-                    min-width:100px;
-
-                    position: fixed;
-                    top: 2px;
-                    left: calc(15% + 140px);
-                    transform: translateX(-50%);
-                    z-index: 999999;
-                `;
-
-                if(githubVersion !== VERSION){
-                    btn.textContent = `v${VERSION} \u2794 v${githubVersion}`;
-                    btn.title = `Installed: ${VERSION}\nLatest:     ${githubVersion}\nClick to update`;
-
-                    if(!isPatchOnly){
-                        btn.style.background = '#ff4444';
-                        btn.style.color = '#fff';
-                        btn.classList.add('ak-update-available');
-                    }else{
-                        btn.style.background = '#aaaaaa';
-                        btn.style.color = '#000000';
-                    }
-
-                    btn.onclick = () => {window.open('https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js','_blank');};
-                }else{
-                    btn.textContent = `v${VERSION}`;
-                    btn.title = `Installed: ${VERSION}\nLatest:     ${githubVersion}\nNo new updates`;
-                    btn.style.background = '#aaaaaa';
-                    btn.style.color = '#000000';
-                }
-                document.body.appendChild(btn);
-            }catch (err){console.error('Version check failed', err);}
-        }
 
         function bindImageZoom(){
             if(!window.akShiftZoomBound){
@@ -326,7 +332,6 @@ if(localStorage.getItem('disableInject') !== 'true'){
         applyLayout();
         applyDarkMode();
         runDataChecks();
-        checkForUpdates();
         bindImageZoom();
 
         const imageButton = document.querySelector('#imageModeBtn');
@@ -346,17 +351,6 @@ if(localStorage.getItem('disableInject') !== 'true'){
                 darkMode = !darkMode;
                 localStorage.setItem('darkMode',darkMode);
                 applyDarkMode();
-            });
-        }
-
-        const disableButton = document.querySelector('#disableBtn');
-        if (disableButton && !disableButton.dataset.akBound){
-            disableButton.dataset.akBound = 'true';
-            disableButton.textContent = 'Disable Inject';
-            disableButton.addEventListener('click', () => {
-                localStorage.setItem('disableInject', 'true');
-                location.reload();
-
             });
         }
 

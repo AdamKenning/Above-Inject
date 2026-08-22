@@ -79,11 +79,19 @@ div.btn-group-vertical{
 }
 
 .thumbnail {
+    border-radius:20px !important;
+    margin: 0px 0px 5px 0px;
+    padding: 2px;
+
     overflow: hidden !important;
     position: relative;
 }
 
 .thumbnail img {
+    border-radius: 20px !important;
+    margin: 0px;
+    padding: 0px;
+
     transition: transform 0.4s ease;
     transform-origin: center center;
 }
