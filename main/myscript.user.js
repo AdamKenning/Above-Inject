@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.5.2
+// @version      2.5.3
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -203,6 +203,11 @@ if(localStorage.getItem('disableInject') !== 'true'){
                 img.dataset.zoomBound = 'true';
                 const container = img.closest('.thumbnail');
                 container.addEventListener('mousemove', e => {
+                    if (!e.shiftKey || imageZoomLevel === 0) {
+                        img.style.transform = 'scale(1)';
+                        return;
+                    }
+
                     const rect = container.getBoundingClientRect();
                     const x = ((e.clientX - rect.left) / rect.width) * 100;
                     const y = ((e.clientY - rect.top) / rect.height) * 100;
@@ -222,7 +227,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
 
 
                 container.addEventListener('wheel', e => {
-                    if (!e.ctrlKey) return;
+                    if (!e.shiftKey) return;
                     e.preventDefault();
                     if (e.deltaY < 0){imageZoomLevel = Math.min(imageZoomLevel + 1, 3);}
                     else{imageZoomLevel = Math.max(imageZoomLevel - 1, 0);}
@@ -230,7 +235,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
                     const zoomBtn = document.querySelector('#zoomLevelBtn');
                     if (zoomBtn) {
                         zoomBtn.textContent = ['Zoom Off', 'Zoom 2x', 'Zoom 4x', 'Zoom 8x'][imageZoomLevel];
-                        zoomBtn.title = 'Ctrl + Mouse Wheel over image zoom';
+                        zoomBtn.title = 'Shift + Mouse Wheel over image zoom';
                     }
                     img.style.transform = `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
                 }, { passive: false });
@@ -266,7 +271,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
             const labels = ['Zoom Off', 'Zoom 2x', 'Zoom 4x', 'Zoom 8x'];
             if(zoomBtn){
                 zoomBtn.textContent =labels[imageZoomLevel];
-                zoomBtn.title = 'Ctrl + Mouse Wheel over image to zoom';
+                zoomBtn.title = 'Shift + Mouse Wheel over image to zoom';
             }
 
         }

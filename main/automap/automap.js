@@ -21,3 +21,7 @@ const style = document.createElement("style");
 
 style.textContent = css;
 document.head.appendChild(style);
+
+// dark mode - mod box fix
+// type anywhere - go to anom after time out
+// e.g. 191e --> open anom 191 and trigger clcik on edit button
