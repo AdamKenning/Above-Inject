@@ -8,7 +8,7 @@
 // @match        https://analyst.abovesurveying.com/analystAutoMapV2.php?*
 // @icon         https://analyst.abovesurveying.com/img/logo@2x.png
 
-// @resource     https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/automap/automap.css
+// @resource     mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/automap/automap.css
 
 // @grant        GM_getResourceText
 
