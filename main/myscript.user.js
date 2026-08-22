@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.5.3
+// @version      2.5.4
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -155,9 +155,6 @@ if(localStorage.getItem('disableInject') !== 'true'){
                 const latest = githubVersion.split('.').map(Number);
                 const isPatchOnly = current[0] === latest[0] && current[1] === latest[1] && current[2] !== latest[2];
 
-
-
-
                 const btn = document.createElement('button');
                 btn.style.cssText = `
                     border: 2px solid #000000;
@@ -198,47 +195,63 @@ if(localStorage.getItem('disableInject') !== 'true'){
         }
 
         function bindImageZoom(){
+            if(!window.akShiftZoomBound){
+                window.akShiftZoomBound = true;
+                document.addEventListener('keydown', e =>{
+                    if(e.key !== 'Shift') return;
+                    document.querySelectorAll('#dataTable .thumbnail:hover img').forEach(img => {
+                        img.style.transformOrigin = `${img.dataset.lastX}% ${img.dataset.lastY}%`;
+                        img.style.transform = `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
+                    });
+                });
+                document.addEventListener('keyup', e => {
+                    if (e.key !== 'Shift') return;
+                    document.querySelectorAll('#dataTable .thumbnail img').forEach(img => {
+                        img.style.transform = 'scale(1)';
+                    });
+                });
+            }
+
             document.querySelectorAll('#dataTable .thumbnail img').forEach(img => {
-                if (img.dataset.zoomBound) return;
+                if(img.dataset.zoomBound) return;
                 img.dataset.zoomBound = 'true';
                 const container = img.closest('.thumbnail');
+                img.dataset.lastX = 50;
+                img.dataset.lastY = 50;
+
                 container.addEventListener('mousemove', e => {
-                    if (!e.shiftKey || imageZoomLevel === 0) {
-                        img.style.transform = 'scale(1)';
-                        return;
-                    }
-
                     const rect = container.getBoundingClientRect();
-                    const x = ((e.clientX - rect.left) / rect.width) * 100;
-                    const y = ((e.clientY - rect.top) / rect.height) * 100;
-                    if(imageZoomLevel === 0){
-                        img.style.transform = 'scale(1)';
-                        return;
-                    }
-
-                    const scales = [1, 2, 4, 8];
-                    img.style.transformOrigin = `${x}% ${y}%`;
-                    img.style.transform = `scale(${scales[imageZoomLevel]})`;
+                    img.dataset.lastX = ((e.clientX - rect.left) / rect.width) * 100;
+                    img.dataset.lastY = ((e.clientY - rect.top) / rect.height) * 100;
+                    if(!e.shiftKey || imageZoomLevel === 0) return;
+                    img.style.transformOrigin = `${img.dataset.lastX}% ${img.dataset.lastY}%`;
+                    img.style.transform = `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
                 });
+
                 container.addEventListener('mouseleave', () => {
                     img.style.transformOrigin = 'center center';
                     img.style.transform = 'scale(1)';
                 });
 
-
                 container.addEventListener('wheel', e => {
-                    if (!e.shiftKey) return;
+                    if(!e.shiftKey) return;
                     e.preventDefault();
-                    if (e.deltaY < 0){imageZoomLevel = Math.min(imageZoomLevel + 1, 3);}
-                    else{imageZoomLevel = Math.max(imageZoomLevel - 1, 0);}
-                    localStorage.setItem('imageZoomLevel',imageZoomLevel);
+                    if(e.deltaY < 0) imageZoomLevel = Math.min(imageZoomLevel + 1, 3);
+                    else imageZoomLevel = Math.max(imageZoomLevel - 1, 0);
+                    localStorage.setItem('imageZoomLevel', imageZoomLevel);
                     const zoomBtn = document.querySelector('#zoomLevelBtn');
-                    if (zoomBtn) {
-                        zoomBtn.textContent = ['Zoom Off', 'Zoom 2x', 'Zoom 4x', 'Zoom 8x'][imageZoomLevel];
-                        zoomBtn.title = 'Shift + Mouse Wheel over image zoom';
-                    }
-                    img.style.transform = `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
+                    if(zoomBtn) zoomBtn.textContent = ['Zoom Off', 'Zoom 2x', 'Zoom 4x', 'Zoom 8x'][imageZoomLevel];
+                    img.style.transformOrigin = `${img.dataset.lastX}% ${img.dataset.lastY}%`;
+                    img.style.transform = imageZoomLevel === 0 ? 'scale(1)' : `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
                 }, { passive: false });
+
+                container.addEventListener('mouseenter', () => {
+                    if (!imageZoomLevel) return;
+                    const shiftPressed = window.event && window.event.shiftKey;
+                    if (!shiftPressed) return;
+                    img.style.transformOrigin = `${img.dataset.lastX}% ${img.dataset.lastY}%`;
+                    img.style.transform = `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
+                });
 
             });
 
