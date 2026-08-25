@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.5.5
+// @version      2.5.6
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -250,15 +250,6 @@ if(localStorage.getItem('disableInject') !== 'true'){
                     img.style.transformOrigin = `${img.dataset.lastX}% ${img.dataset.lastY}%`;
                     img.style.transform = imageZoomLevel === 0 ? 'scale(1)' : `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
                 }, { passive: false });
-
-                container.addEventListener('mouseenter', () => {
-                    if (!imageZoomLevel) return;
-                    const shiftPressed = window.event && window.event.shiftKey;
-                    if (!shiftPressed) return;
-                    img.style.transformOrigin = `${img.dataset.lastX}% ${img.dataset.lastY}%`;
-                    img.style.transform = `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
-                });
-
             });
 
         }
