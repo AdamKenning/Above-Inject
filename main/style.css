@@ -78,26 +78,6 @@ div.btn-group-vertical{
     z-index: -10540 !important;
 }
 
-.thumbnail {
-    width:100%;
-    aspect-ratio: 4/3;
-    border-radius:20px !important;
-    margin: 0px 0px 5px 0px;
-    padding: 2px;
-
-    overflow: hidden !important;
-    position: relative;
-}
-
-.thumbnail img {
-    border-radius: 20px !important;
-    margin: 0px;
-    padding: 0px;
-
-    transition: transform 0.4s ease;
-    transform-origin: center center;
-}
-
 /* =========================================================
 HIDE SPINNERS / BUTTON
 ========================================================= */
@@ -355,6 +335,26 @@ IMAGE MODE
     height:auto!important;
     max-width:none!important;
     max-height:none!important;
+}
+
+.image-priority-mode .thumbnail {
+    width:100%;
+    aspect-ratio: 4/3;
+    border-radius:20px !important;
+    margin: 0px 0px 5px 0px;
+    padding: 2px;
+
+    overflow: hidden !important;
+    position: relative;
+}
+
+.image-priority-mode .thumbnail img {
+    border-radius: 20px !important;
+    margin: 0px;
+    padding: 0px;
+
+    transition: transform 0.4s ease;
+    transform-origin: center center;
 }
 
 .image-priority-mode th:nth-child(4),
