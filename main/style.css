@@ -123,15 +123,31 @@ input[type=number]::-webkit-outer-spin-button{
     align-items:center;
 }
 
+.ak-toolbar{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
 
-#tmpBtn{
-    color:#00aba9;
-    background:#fff;
-    border: 2px solid #00aba9;
+.ak-feature-group{
+    display:flex;
+    gap:8px;
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+}
 
+.ak-nav-group{
+    position:absolute;
+    left:calc(50% + 400px);
+
+    display:flex;
+    gap:2px;
+
+    padding:2px;
+    border:none;
     border-radius:4px;
-    padding:4px 8px;
-    min-width:100px;
+    background:#fff;
 }
 
 .ak-toolbar-button{
@@ -145,8 +161,51 @@ input[type=number]::-webkit-outer-spin-button{
     min-width:100px;
 }
 
+#tmpBtn{
+    color:#00aba9;
+    background:#fff;
+    border: 2px solid #00aba9;
+    border-radius:4px;
+    padding:4px 8px;
+    min-width:100px;
+}
+
+.ak-nav-btn{
+    width:28px;
+    height:28px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+    color:#fff;
+    background:#00aba9;
+    border:none;
+    border-radius:4px;
+    cursor:pointer;
+    font-weight:bold;
+    z-index:99999;
+}
+
+.ak-nav-btn:hover{background:#00918f;}
 .ak-toolbar-button:hover{background:#00918f;}
 .ak-toolbar-button:active{transform:translateY(-2px);}
+
+.ak-page-indicator{
+    width:28px;
+    height:28px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:#fff;
+    background:#368EE0;
+
+    border-radius:4px;
+
+    font-weight:bold;
+    user-select:none;
+}
 
 /* =========================================================
 DATA MODE

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.6.0
+// @version      2.7.0
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -145,20 +145,30 @@ if(localStorage.getItem('disableInject') !== 'true'){
             middle.className = 'col-sm-4 ak-toolbar';
 
             middle.innerHTML = `
-            <div style="
-                display:flex;
-                justify-content:center;
-                align-items:center;
-                gap:8px;
-                height:34px;
-            ">
-                <button class="ak-toolbar-button" id="imageModeBtn"> </button>
-                <button class="ak-toolbar-button" id="darkModeBtn"> </button>
-                <button class="ak-toolbar-button" id="zoomLevelBtn"> </button>
-                <button class="ak-toolbar-button" id="flushCacheBtn"> Flush Cache </button>
-                <button class="ak-toolbar-button" id="tmpBtn"> feature 5? </button>
-            </div>
-        `;
+                <div style="
+                    display:flex;
+                    justify-content:center;
+                    align-items:center;
+                    gap:8px;
+                    height:34px;
+                ">
+                    <div class="ak-feature-group">
+                        <button class="ak-toolbar-button" id="imageModeBtn"> </button>
+                        <button class="ak-toolbar-button" id="darkModeBtn"> </button>
+                        <button class="ak-toolbar-button" id="zoomLevelBtn"> </button>
+                        <button class="ak-toolbar-button" id="flushCacheBtn"> Flush Cache </button>
+                        <button class="ak-toolbar-button" id="tmpBtn"> feature 5? </button>
+                    </div>
+
+                    <div class="ak-nav-group">
+                        <button class="ak-nav-btn" id="pageUpBtn">\u2B9D</button>
+                        <button class="ak-nav-btn" id="pageDownBtn">\u2B9F</button>
+                        <button class="ak-nav-btn" id="prevPageBtn">\u2B9C</button>
+                        <button class="ak-nav-btn" id="nextPageBtn">\u2B9E</button>
+                        <div class="ak-page-indicator" id="pageIndicator">1</div>
+                    </div>
+                </div>
+            `;
 
             left.after(middle);
         }
@@ -173,13 +183,13 @@ if(localStorage.getItem('disableInject') !== 'true'){
             select.dataset.akPatched = 'true';
 
             select.innerHTML = `
-            <option value="10">10</option>
-            <option value="25">25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-            <option value="500">500</option>
-            <option value="1000">1k</option>
-        `;
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="500">500</option>
+                <option value="1000">1k</option>
+            `;
 
             select.value = '100';
             select.dispatchEvent(new Event('change', { bubbles: true }));
@@ -300,6 +310,12 @@ if(localStorage.getItem('disableInject') !== 'true'){
 
         }
 
+        function updatePageIndicator(){
+            const activePage = document.querySelector('#dataTable_paginate li.active a');
+            const indicator = document.querySelector('#pageIndicator');
+            if (activePage && indicator) {indicator.textContent = activePage.textContent.trim();}
+        }
+
         // =========================================================
         // Data checks
         // =========================================================
@@ -338,6 +354,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
         applyDarkMode();
         runDataChecks();
         bindImageZoom();
+        updatePageIndicator();
 
         const imageButton = document.querySelector('#imageModeBtn');
         if(imageButton && !imageButton.dataset.akBound){
@@ -379,6 +396,38 @@ if(localStorage.getItem('disableInject') !== 'true'){
             });
         }
 
+        // nav stuff
+
+        const prevPageBtn = document.querySelector('#prevPageBtn');
+        if (prevPageBtn && !prevPageBtn.dataset.akBound) {
+            prevPageBtn.dataset.akBound = 'true';
+            prevPageBtn.addEventListener('click', () => {
+                document.querySelector('.paginate_button.previous:not(.disabled)')?.click();
+                setTimeout(updatePageIndicator, 50);
+            });
+        }
+
+        const nextPageBtn = document.querySelector('#nextPageBtn');
+        if (nextPageBtn && !nextPageBtn.dataset.akBound) {
+            nextPageBtn.dataset.akBound = 'true';
+            nextPageBtn.addEventListener('click', () => {
+                document.querySelector('.paginate_button.next:not(.disabled)')?.click();
+                setTimeout(updatePageIndicator, 50);
+            });
+        }
+
+        const pageUpBtn = document.querySelector('#pageUpBtn');
+        if (pageUpBtn && !pageUpBtn.dataset.akBound) {
+            pageUpBtn.dataset.akBound = 'true';
+            pageUpBtn.addEventListener('click', () => {document.querySelector('#dataTable_wrapper')?.scrollIntoView({ behavior: 'smooth' });});
+        }
+
+        const pageDownBtn = document.querySelector('#pageDownBtn');
+        if (pageDownBtn && !pageDownBtn.dataset.akBound) {
+            pageDownBtn.dataset.akBound = 'true';
+            pageDownBtn.addEventListener('click', () => {window.scrollTo({top: document.body.scrollHeight,behavior: 'smooth'});});
+        }
+
         // =========================================================
         // Monitor Table Changes
         // =========================================================
@@ -390,6 +439,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
                 applyLayout();
                 runDataChecks();
                 bindImageZoom();
+                updatePageIndicator();
             });
 
             tbodyObserver.observe(tbody, {
