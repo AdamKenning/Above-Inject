@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.7.1
+// @version      2.7.2
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
 // @match        https://analyst.abovesurveying.com/analystSurvey.php?*
 // @icon         https://analyst.abovesurveying.com/img/logo@2x.png
 
-// @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css?v=2.7.1
+// @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css?v=2.7.2
 // @grant GM_getResourceText
 // @grant GM_info
 
@@ -106,6 +106,16 @@ async function checkForUpdates(){
     }catch (err){console.error('Version check failed', err);}
 }
 checkForUpdates();
+
+// Change to last used tab
+window.addEventListener('load', () => {
+    const lastTab = localStorage.getItem('akLastTab') || '#defectList';
+    setTimeout(() => {document.querySelector(`a[href="${lastTab}"]`)?.click();}, 100);
+    document.querySelectorAll('.nav.nav-tabs a').forEach(tab => {
+        tab.addEventListener('click', () => {localStorage.setItem('akLastTab', tab.getAttribute('href'));});
+    });
+});
+
 
 // Main Logic
 if(localStorage.getItem('disableInject') !== 'true'){
