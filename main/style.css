@@ -79,6 +79,8 @@ div.btn-group-vertical{
 }
 
 .thumbnail {
+    width:100%;
+    aspect-ratio: 4/3;
     border-radius:20px !important;
     margin: 0px 0px 5px 0px;
     padding: 2px;

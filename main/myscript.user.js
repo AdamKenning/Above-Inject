@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.5.6
+// @version      2.6.0
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -154,8 +154,8 @@ if(localStorage.getItem('disableInject') !== 'true'){
             ">
                 <button class="ak-toolbar-button" id="imageModeBtn"> </button>
                 <button class="ak-toolbar-button" id="darkModeBtn"> </button>
-                <button class="ak-toolbar-button" id="zoomLevelBtn"> feature 3? </button>
-                <button class="ak-toolbar-button" id="tmpBtn"> feature 4? </button>
+                <button class="ak-toolbar-button" id="zoomLevelBtn"> </button>
+                <button class="ak-toolbar-button" id="flushCacheBtn"> Flush Cache </button>
                 <button class="ak-toolbar-button" id="tmpBtn"> feature 5? </button>
             </div>
         `;
@@ -254,6 +254,20 @@ if(localStorage.getItem('disableInject') !== 'true'){
 
         }
 
+        function hardFlushImageCache() {
+            const cacheBuster = Date.now();
+            document.querySelectorAll('#dataTable img').forEach(img => {
+                img.loading = 'lazy';
+                const src = img.getAttribute('src');
+                if (!src) return;
+                const url = new URL(src, location.origin);
+                url.searchParams.set('_akcache', cacheBuster);
+                img.src = '';
+                img.src = url.toString();
+            });
+            console.log(`Reloaded ${document.querySelectorAll('#dataTable img').length} images`);
+        }
+
 
         function applyDarkMode() {
             document.documentElement.classList.toggle('dark-mode',darkMode);
@@ -346,14 +360,24 @@ if(localStorage.getItem('disableInject') !== 'true'){
         }
 
         const zoomButton = document.querySelector('#zoomLevelBtn');
-            if(zoomButton && !zoomButton.dataset.akBound){
-                zoomButton.dataset.akBound = 'true';
-                zoomButton.addEventListener('click', () => {
-                    imageZoomLevel = (imageZoomLevel + 1) % 4;
-                    localStorage.setItem('imageZoomLevel',imageZoomLevel);
-                    applyLayout();
-                });
-            }
+        if(zoomButton && !zoomButton.dataset.akBound){
+            zoomButton.dataset.akBound = 'true';
+            zoomButton.addEventListener('click', () => {
+                imageZoomLevel = (imageZoomLevel + 1) % 4;
+                localStorage.setItem('imageZoomLevel',imageZoomLevel);
+                applyLayout();
+            });
+        }
+
+        const flushCacheButton = document.querySelector('#flushCacheBtn');
+        if (flushCacheButton && !flushCacheButton.dataset.akBound) {
+            flushCacheButton.dataset.akBound = 'true';
+            flushCacheButton.addEventListener('click', () => {
+                hardFlushImageCache();
+                flushCacheButton.textContent = 'Flushing...';
+                setTimeout(() => {flushCacheButton.textContent = 'Flush Cache';}, 1500);
+            });
+        }
 
         // =========================================================
         // Monitor Table Changes
