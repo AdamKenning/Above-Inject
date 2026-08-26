@@ -31,7 +31,6 @@ UPDATE BUTTON
         transform: translateX(-50%) scale(1);
         filter: brightness(1);
     }
-    
     50% {
         transform: translateX(-50%) scale(1.03);
         filter: brightness(1.3);

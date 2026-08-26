@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.7.2
+// @version      2.7.3
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -107,18 +107,17 @@ async function checkForUpdates(){
 }
 checkForUpdates();
 
-// Change to last used tab
-window.addEventListener('load', () => {
-    const lastTab = localStorage.getItem('akLastTab') || '#defectList';
-    setTimeout(() => {document.querySelector(`a[href="${lastTab}"]`)?.click();}, 100);
-    document.querySelectorAll('.nav.nav-tabs a').forEach(tab => {
-        tab.addEventListener('click', () => {localStorage.setItem('akLastTab', tab.getAttribute('href'));});
-    });
-});
-
-
 // Main Logic
 if(localStorage.getItem('disableInject') !== 'true'){
+    // Change to last used tab
+    window.addEventListener('load', () => {
+        const lastTab = localStorage.getItem('akLastTab') || '#defectList';
+        setTimeout(() => {document.querySelector(`a[href="${lastTab}"]`)?.click();}, 100);
+        document.querySelectorAll('.nav.nav-tabs a').forEach(tab => {
+            tab.addEventListener('click', () => {localStorage.setItem('akLastTab', tab.getAttribute('href'));});
+        });
+    });
+
     const css = GM_getResourceText("mainCss");
     const style = document.createElement("style");
 
@@ -275,18 +274,37 @@ if(localStorage.getItem('disableInject') !== 'true'){
         }
 
         function hardFlushImageCache() {
-            const cacheBuster = Date.now();
-            document.querySelectorAll('#dataTable img').forEach(img => {
-                img.loading = 'lazy';
-                const src = img.getAttribute('src');
+            const cacheBuster = `${Date.now()}-${Math.random()}`;
+            const images = document.querySelectorAll('#dataTable img');
+
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) return;
+                    const img = entry.target;
+                    observer.unobserve(img);
+                    const src = img.dataset.realSrc;
+                    if (!src) return;
+                    const url = new URL(src, location.href);
+                    url.searchParams.set('_akcache', cacheBuster);
+                    img.src = url.href;
+                });
+            },{rootMargin: '1000px'});
+
+            images.forEach(img => {
+                const src = img.currentSrc || img.src;
                 if (!src) return;
-                const url = new URL(src, location.origin);
-                url.searchParams.set('_akcache', cacheBuster);
-                img.src = '';
-                img.src = url.toString();
+                img.dataset.realSrc = src;
+                img.removeAttribute('src'); // force unload
+                if(img.getBoundingClientRect().top < window.innerHeight * 2){
+                    const url = new URL(src, location.href);
+                    url.searchParams.set('_akcache', cacheBuster);
+                    img.src = url.href;
+                }else{
+                    observer.observe(img);
+                }
             });
-            console.log(`Reloaded ${document.querySelectorAll('#dataTable img').length} images`);
         }
+
 
 
         function applyDarkMode() {
