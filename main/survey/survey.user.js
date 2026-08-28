@@ -9,7 +9,7 @@
 // @match        https://analyst.abovesurveying.com/analystSurvey.php?*
 // @icon         https://analyst.abovesurveying.com/img/logo@2x.png
 
-// @resource     mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey/survey.css
+// @resource     mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey/survey.css?v=2.7.2
 // @downloadURL          https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey/survey.user.js
 // @updateURL            https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey/survey.user.js
 // ==/UserScript==
