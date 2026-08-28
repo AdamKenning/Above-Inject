@@ -1,56 +1,129 @@
 // ==UserScript==
-// @name         SurveyInject
+// @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.3.1
+// @version      3.0.0
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
+// @grant        GM_getResourceText
 
 // @match        https://analyst.abovesurveying.com/analystSurvey.php?*
 // @icon         https://analyst.abovesurveying.com/img/logo@2x.png
 
-// @resource     mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey.css
-
-// @grant        GM_getResourceText
-
-// @downloadURL  https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey/survey.user.js
-// @updateURL    https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey/survey.user.js
+// @resource     mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey/survey.css
+// @downloadURL          https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey/survey.user.js
+// @updateURL            https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey/survey.user.js
 // ==/UserScript==
 
-const toggleBtn = document.createElement('button');
-toggleBtn.textContent = localStorage.getItem('disableInject') === 'true' ? 'Enable Above-Inject' : 'Disable Above-Inject';
-toggleBtn.style.cssText = `
-    background:#ffffff;
-    color:#000000;
-    border: 2px solid #000000;
-    border-radius:4px;
-    cursor:pointer;
-    padding:4px 8px;
-    min-width:100px;
+// Kill Switch
+function addKillSwitch(){
+    const toggleBtn = document.createElement('button');
+    toggleBtn.textContent = localStorage.getItem('disableInject') === 'true' ? 'Enable Inject' : 'Disable Inject';
+    toggleBtn.style.cssText = `
+        background: #aaaaaa;
+        color: #000000;
+        border: 2px solid #000000;
 
-    position: fixed;
-    top: 2px;
-    left: 25%;
-    transform: translateX(-50%);
-    z-index: 999999;
-`;
-toggleBtn.addEventListener('click', () => {
-    const disabled = localStorage.getItem('disableInject') === 'true';
-    localStorage.setItem('disableInject', (!disabled).toString());
-    location.reload();
-});
-if (document.body) {
-    document.body.appendChild(toggleBtn);
-} else {
-    window.addEventListener('DOMContentLoaded', () => {
-        document.body.appendChild(toggleBtn);
+        border-radius:4px;
+        cursor:pointer;
+        padding:4px 8px;
+        min-width:100px;
+
+        position: fixed;
+        top: 2px;
+        left: 15%;
+        transform: translateX(-50%);
+        z-index: 999999;
+    `;
+    toggleBtn.addEventListener('click', () => {
+        const disabled = localStorage.getItem('disableInject') === 'true';
+        localStorage.setItem('disableInject', (!disabled).toString());
+        location.reload();
     });
+    if (document.body) {document.body.appendChild(toggleBtn);}
+    else {window.addEventListener('DOMContentLoaded', () => {document.body.appendChild(toggleBtn);});}
 }
+addKillSwitch()
 
 
+// Version info
+async function checkForUpdates(){
+    const VERSION = GM_info.script.version;
+    try{
+        const response = await fetch(
+            'https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey/survey.user.js?t=' + Date.now(), 
+            {cache: 'no-store'}
+        );
+        const text = await response.text();
+        const match = text.match(/@version\s+([0-9.]+)/);
+        if (!match) return;
+        const githubVersion = match[1];
+
+        console.log("Installed:", VERSION);
+        console.log("GitHub:", githubVersion);
+
+        const current = VERSION.split('.').map(Number);
+        const latest = githubVersion.split('.').map(Number);
+        const isPatchOnly = current[0] === latest[0] && current[1] === latest[1] && current[2] !== latest[2];
+
+        const btn = document.createElement('button');
+        btn.style.cssText = `
+                    border: 2px solid #000000;
+                    border-radius:4px;
+                    cursor:pointer;
+                    padding:4px 8px;
+                    min-width:100px;
+
+                    position: fixed;
+                    top: 2px;
+                    left: calc(15% + 140px);
+                    transform: translateX(-50%);
+                    z-index: 999999;
+                `;
+
+        if(githubVersion !== VERSION){
+            btn.textContent = `v${VERSION} \u2794 v${githubVersion}`;
+            btn.title = `Installed: ${VERSION}\nLatest:     ${githubVersion}\nClick to update`;
+
+            if(!isPatchOnly){
+                btn.style.background = '#ff4444';
+                btn.style.color = '#fff';
+                btn.classList.add('ak-update-available');
+            }else{
+                btn.style.background = '#aaaaaa';
+                btn.style.color = '#000000';
+            }
+
+            btn.onclick = () => {window.open('https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey/survey.user.js','_blank');};
+        }else{
+            btn.textContent = `v${VERSION}`;
+            btn.title = `Installed: ${VERSION}\nLatest:     ${githubVersion}\nNo new updates`;
+            btn.style.background = '#aaaaaa';
+            btn.style.color = '#000000';
+        }
+        if (document.body){document.body.appendChild(btn);}
+        else{window.addEventListener('DOMContentLoaded', () => {document.body.appendChild(btn);});}
+    }catch (err){console.error('Version check failed', err);}
+}
+checkForUpdates();
+
+// Main Logic
 if(localStorage.getItem('disableInject') !== 'true'){
+    // Change to last used tab
+    function switchLastTab(){
+        window.addEventListener('load', () => {
+            const lastTab = localStorage.getItem('akLastTab') || '#defectList';
+            setTimeout(() => {document.querySelector(`a[href="${lastTab}"]`)?.click();}, 100);
+            document.querySelectorAll('.nav.nav-tabs a').forEach(tab => {
+                tab.addEventListener('click', () => {localStorage.setItem('akLastTab', tab.getAttribute('href'));});
+            });
+        });
+    }
+    switchLastTab();
+    
+
+    // Load CSS
     const css = GM_getResourceText("mainCss");
     const style = document.createElement("style");
-
     style.textContent = css;
     document.head.appendChild(style);
 
@@ -84,20 +157,30 @@ if(localStorage.getItem('disableInject') !== 'true'){
             middle.className = 'col-sm-4 ak-toolbar';
 
             middle.innerHTML = `
-            <div style="
-                display:flex;
-                justify-content:center;
-                align-items:center;
-                gap:8px;
-                height:34px;
-            ">
-                <button class="ak-toolbar-button" id="imageModeBtn"> </button>
-                <button class="ak-toolbar-button" id="darkModeBtn"> </button>
-                <button class="ak-toolbar-button" id="tmpBtn"> feature 3? </button>
-                <button class="ak-toolbar-button" id="tmpBtn"> feature 4? </button>
-                <button class="ak-toolbar-button" id="tmpBtn"> feature 5? </button>
-            </div>
-        `;
+                <div style="
+                    display:flex;
+                    justify-content:center;
+                    align-items:center;
+                    gap:8px;
+                    height:34px;
+                ">
+                    <div class="ak-feature-group">
+                        <button class="ak-toolbar-button" id="imageModeBtn"> </button>
+                        <button class="ak-toolbar-button" id="darkModeBtn"> </button>
+                        <button class="ak-toolbar-button" id="zoomLevelBtn"> </button>
+                        <button class="ak-toolbar-button" id="flushCacheBtn"> Flush Cache </button>
+                        <button class="ak-toolbar-button" id="tmpBtn"> feature 5? </button>
+                    </div>
+
+                    <div class="ak-nav-group">
+                        <button class="ak-nav-btn" id="pageUpBtn">\u2B9D</button>
+                        <button class="ak-nav-btn" id="pageDownBtn">\u2B9F</button>
+                        <button class="ak-nav-btn" id="prevPageBtn">\u2B9C</button>
+                        <button class="ak-nav-btn" id="nextPageBtn">\u2B9E</button>
+                        <div class="ak-page-indicator" id="pageIndicator">1</div>
+                    </div>
+                </div>
+            `;
 
             left.after(middle);
         }
@@ -112,13 +195,13 @@ if(localStorage.getItem('disableInject') !== 'true'){
             select.dataset.akPatched = 'true';
 
             select.innerHTML = `
-            <option value="10">10</option>
-            <option value="25">25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-            <option value="500">500</option>
-            <option value="1000">1k</option>
-        `;
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="500">500</option>
+                <option value="1000">1k</option>
+            `;
 
             select.value = '100';
             select.dispatchEvent(new Event('change', { bubbles: true }));
@@ -132,10 +215,100 @@ if(localStorage.getItem('disableInject') !== 'true'){
         let imageMode = localStorage.getItem('imagePriorityMode') === 'true';
         if(localStorage.getItem('darkMode') === null){localStorage.setItem('darkMode', 'true');}
         let darkMode = localStorage.getItem('darkMode') === 'true';
+        if(localStorage.getItem('imageZoomLevel') === null){localStorage.setItem('imageZoomLevel', '0');}
+        let imageZoomLevel = Number(localStorage.getItem('imageZoomLevel'));
 
         // =========================================================
-        // Layout
+        // Features
         // =========================================================
+
+        function bindImageZoom(){
+            if(!window.akShiftZoomBound){
+                window.akShiftZoomBound = true;
+                document.addEventListener('keydown', e =>{
+                    if(e.key !== 'Shift') return;
+                    document.querySelectorAll('#dataTable .thumbnail:hover img').forEach(img => {
+                        img.style.transformOrigin = `${img.dataset.lastX}% ${img.dataset.lastY}%`;
+                        img.style.transform = `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
+                    });
+                });
+                document.addEventListener('keyup', e => {
+                    if (e.key !== 'Shift') return;
+                    document.querySelectorAll('#dataTable .thumbnail img').forEach(img => {
+                        img.style.transform = 'scale(1)';
+                    });
+                });
+            }
+
+            document.querySelectorAll('#dataTable .thumbnail img').forEach(img => {
+                if(img.dataset.zoomBound) return;
+                img.dataset.zoomBound = 'true';
+                const container = img.closest('.thumbnail');
+                img.dataset.lastX = 50;
+                img.dataset.lastY = 50;
+
+                container.addEventListener('mousemove', e => {
+                    const rect = container.getBoundingClientRect();
+                    img.dataset.lastX = ((e.clientX - rect.left) / rect.width) * 100;
+                    img.dataset.lastY = ((e.clientY - rect.top) / rect.height) * 100;
+                    if(!e.shiftKey || imageZoomLevel === 0) return;
+                    img.style.transformOrigin = `${img.dataset.lastX}% ${img.dataset.lastY}%`;
+                    img.style.transform = `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
+                });
+
+                container.addEventListener('mouseleave', () => {
+                    img.style.transformOrigin = 'center center';
+                    img.style.transform = 'scale(1)';
+                });
+
+                container.addEventListener('wheel', e => {
+                    if(!e.shiftKey) return;
+                    e.preventDefault();
+                    if(e.deltaY < 0) imageZoomLevel = Math.min(imageZoomLevel + 1, 3);
+                    else imageZoomLevel = Math.max(imageZoomLevel - 1, 0);
+                    localStorage.setItem('imageZoomLevel', imageZoomLevel);
+                    const zoomBtn = document.querySelector('#zoomLevelBtn');
+                    if(zoomBtn) zoomBtn.textContent = ['Zoom Off', 'Zoom 2x', 'Zoom 4x', 'Zoom 8x'][imageZoomLevel];
+                    img.style.transformOrigin = `${img.dataset.lastX}% ${img.dataset.lastY}%`;
+                    img.style.transform = imageZoomLevel === 0 ? 'scale(1)' : `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
+                }, { passive: false });
+            });
+
+        }
+
+        function hardFlushImageCache() {
+            const cacheBuster = `${Date.now()}-${Math.random()}`;
+            const images = document.querySelectorAll('#dataTable img');
+
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) return;
+                    const img = entry.target;
+                    observer.unobserve(img);
+                    const src = img.dataset.realSrc;
+                    if (!src) return;
+                    const url = new URL(src, location.href);
+                    url.searchParams.set('_akcache', cacheBuster);
+                    img.src = url.href;
+                });
+            },{rootMargin: '1000px'});
+
+            images.forEach(img => {
+                const src = img.currentSrc || img.src;
+                if (!src) return;
+                img.dataset.realSrc = src;
+                img.removeAttribute('src'); // force unload
+                if(img.getBoundingClientRect().top < window.innerHeight * 2){
+                    const url = new URL(src, location.href);
+                    url.searchParams.set('_akcache', cacheBuster);
+                    img.src = url.href;
+                }else{
+                    observer.observe(img);
+                }
+            });
+        }
+
+
 
         function applyDarkMode() {
             document.documentElement.classList.toggle('dark-mode',darkMode);
@@ -158,6 +331,20 @@ if(localStorage.getItem('disableInject') !== 'true'){
 
             const btn = document.querySelector('#imageModeBtn');
             if (btn){btn.textContent =imageMode ? 'Data  Mode' : 'Image Mode';}
+
+            const zoomBtn = document.querySelector('#zoomLevelBtn');
+            const labels = ['Zoom Off', 'Zoom 2x', 'Zoom 4x', 'Zoom 8x'];
+            if(zoomBtn){
+                zoomBtn.textContent =labels[imageZoomLevel];
+                zoomBtn.title = 'Shift + Mouse Wheel over image to zoom';
+            }
+
+        }
+
+        function updatePageIndicator(){
+            const activePage = document.querySelector('#dataTable_paginate li.active a');
+            const indicator = document.querySelector('#pageIndicator');
+            if (activePage && indicator) {indicator.textContent = activePage.textContent.trim();}
         }
 
         // =========================================================
@@ -197,6 +384,8 @@ if(localStorage.getItem('disableInject') !== 'true'){
         applyLayout();
         applyDarkMode();
         runDataChecks();
+        bindImageZoom();
+        updatePageIndicator();
 
         const imageButton = document.querySelector('#imageModeBtn');
         if(imageButton && !imageButton.dataset.akBound){
@@ -218,15 +407,56 @@ if(localStorage.getItem('disableInject') !== 'true'){
             });
         }
 
-        const disableButton = document.querySelector('#disableBtn');
-        if (disableButton && !disableButton.dataset.akBound){
-            disableButton.dataset.akBound = 'true';
-            disableButton.textContent = 'Disable Inject';
-            disableButton.addEventListener('click', () => {
-                localStorage.setItem('disableInject', 'true');
-                location.reload();
-
+        const zoomButton = document.querySelector('#zoomLevelBtn');
+        if(zoomButton && !zoomButton.dataset.akBound){
+            zoomButton.dataset.akBound = 'true';
+            zoomButton.addEventListener('click', () => {
+                imageZoomLevel = (imageZoomLevel + 1) % 4;
+                localStorage.setItem('imageZoomLevel',imageZoomLevel);
+                applyLayout();
             });
+        }
+
+        const flushCacheButton = document.querySelector('#flushCacheBtn');
+        if (flushCacheButton && !flushCacheButton.dataset.akBound) {
+            flushCacheButton.dataset.akBound = 'true';
+            flushCacheButton.addEventListener('click', () => {
+                hardFlushImageCache();
+                flushCacheButton.textContent = 'Flushing...';
+                setTimeout(() => {flushCacheButton.textContent = 'Flush Cache';}, 1500);
+            });
+        }
+
+        // nav stuff
+
+        const prevPageBtn = document.querySelector('#prevPageBtn');
+        if (prevPageBtn && !prevPageBtn.dataset.akBound) {
+            prevPageBtn.dataset.akBound = 'true';
+            prevPageBtn.addEventListener('click', () => {
+                document.querySelector('.paginate_button.previous:not(.disabled)')?.click();
+                setTimeout(updatePageIndicator, 50);
+            });
+        }
+
+        const nextPageBtn = document.querySelector('#nextPageBtn');
+        if (nextPageBtn && !nextPageBtn.dataset.akBound) {
+            nextPageBtn.dataset.akBound = 'true';
+            nextPageBtn.addEventListener('click', () => {
+                document.querySelector('.paginate_button.next:not(.disabled)')?.click();
+                setTimeout(updatePageIndicator, 50);
+            });
+        }
+
+        const pageUpBtn = document.querySelector('#pageUpBtn');
+        if (pageUpBtn && !pageUpBtn.dataset.akBound) {
+            pageUpBtn.dataset.akBound = 'true';
+            pageUpBtn.addEventListener('click', () => {document.querySelector('#dataTable_wrapper')?.scrollIntoView({ behavior: 'smooth' });});
+        }
+
+        const pageDownBtn = document.querySelector('#pageDownBtn');
+        if (pageDownBtn && !pageDownBtn.dataset.akBound) {
+            pageDownBtn.dataset.akBound = 'true';
+            pageDownBtn.addEventListener('click', () => {window.scrollTo({top: document.body.scrollHeight,behavior: 'smooth'});});
         }
 
         // =========================================================
@@ -236,11 +466,12 @@ if(localStorage.getItem('disableInject') !== 'true'){
         const tbody = table.querySelector('tbody');
 
         if (tbody) {
-            const tbodyObserver =
-                  new MutationObserver(() => {
-                      applyLayout();
-                      runDataChecks();
-                  });
+            const tbodyObserver = new MutationObserver(() => {
+                applyLayout();
+                runDataChecks();
+                bindImageZoom();
+                updatePageIndicator();
+            });
 
             tbodyObserver.observe(tbody, {
                 childList: true,

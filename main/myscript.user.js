@@ -109,7 +109,6 @@ checkForUpdates();
 
 // Main Logic
 if(localStorage.getItem('disableInject') !== 'true'){
-
     // Change to last used tab
     window.addEventListener('load', () => {
         const lastTab = localStorage.getItem('akLastTab') || '#defectList';
@@ -122,6 +121,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
     // Load CSS
     const css = GM_getResourceText("mainCss");
     const style = document.createElement("style");
+
     style.textContent = css;
     document.head.appendChild(style);
 
@@ -136,7 +136,10 @@ if(localStorage.getItem('disableInject') !== 'true'){
         const table = document.querySelector('#dataTable');
         if (!table) return;
 
-        // Feature Bar
+        // =========================================================
+        // Toolbar
+        // =========================================================
+
         function addToolbar() {
             const row = document.querySelector('#dataTable_wrapper > .row:first-child');
             if (!row || row.querySelector('.ak-toolbar')) return;
