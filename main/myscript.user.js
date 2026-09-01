@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.7.6
+// @version      2.7.7
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -230,11 +230,10 @@ if(localStorage.getItem('disableInject') !== 'true'){
                         img.style.transform = `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
                     });
                 });
+
                 document.addEventListener('keyup', e => {
-                    if (e.key !== 'Shift') return;
-                    document.querySelectorAll('#dataTable .thumbnail img').forEach(img => {
-                        img.style.transform = 'scale(1)';
-                    });
+                    if(e.key !== 'Shift') return;
+                    document.querySelectorAll('#dataTable .thumbnail img').forEach(img => {img.style.transform = 'scale(1)';});
                 });
             }
 
@@ -254,9 +253,20 @@ if(localStorage.getItem('disableInject') !== 'true'){
                     img.style.transform = `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
                 });
 
+                container.addEventListener('mouseenter', e => {
+                    if(!e.shiftKey || imageZoomLevel === 0) return;
+                    clearTimeout(img._originResetTimer);
+                    img.style.transformOrigin = `${img.dataset.lastX}% ${img.dataset.lastY}%`;
+                    img.style.transform = `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
+                });
+
                 container.addEventListener('mouseleave', () => {
-                    img.style.transformOrigin = 'center center';
+                    img.style.transformOrigin = `${img.dataset.lastX}% ${img.dataset.lastY}%`;
                     img.style.transform = 'scale(1)';
+                    clearTimeout(img._originResetTimer);
+                    img._originResetTimer = setTimeout(() => {
+                        if(!container.matches(':hover')) img.style.transformOrigin = 'center center';
+                    }, 500);
                 });
 
                 container.addEventListener('wheel', e => {
@@ -264,14 +274,16 @@ if(localStorage.getItem('disableInject') !== 'true'){
                     e.preventDefault();
                     if(e.deltaY < 0) imageZoomLevel = Math.min(imageZoomLevel + 1, 3);
                     else imageZoomLevel = Math.max(imageZoomLevel - 1, 0);
+
                     localStorage.setItem('imageZoomLevel', imageZoomLevel);
                     const zoomBtn = document.querySelector('#zoomLevelBtn');
                     if(zoomBtn) zoomBtn.textContent = ['Zoom Off', 'Zoom 2x', 'Zoom 4x', 'Zoom 8x'][imageZoomLevel];
+
                     img.style.transformOrigin = `${img.dataset.lastX}% ${img.dataset.lastY}%`;
-                    img.style.transform = imageZoomLevel === 0 ? 'scale(1)' : `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
+
+                    img.style.transform = imageZoomLevel === 0 ? 'scale(1)': `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
                 }, { passive: false });
             });
-
         }
 
         function hardFlushImageCache() {
