@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.7.3
+// @version      2.7.4
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
 // @match        https://analyst.abovesurveying.com/analystSurvey.php?*
 // @icon         https://analyst.abovesurveying.com/img/logo@2x.png
 
-// @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css?v=2.7.2
+// @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css?v=2.7.4
 // @grant GM_getResourceText
 // @grant GM_info
 
@@ -295,6 +295,9 @@ if(localStorage.getItem('disableInject') !== 'true'){
                 const src = img.currentSrc || img.src;
                 if (!src) return;
                 img.dataset.realSrc = src;
+                const w = img.naturalWidth;
+                const h = img.naturalHeight;
+                if (w && h){img.parentElement.style.aspectRatio = `${w}/${h}`;}
                 img.removeAttribute('src'); // force unload
                 if(img.getBoundingClientRect().top < window.innerHeight * 2){
                     const url = new URL(src, location.href);
@@ -322,8 +325,8 @@ if(localStorage.getItem('disableInject') !== 'true'){
             table.classList.add(imageMode ? 'image-priority-mode' : 'data-priority-mode');
 
             document.querySelectorAll('#dataTable tbody img').forEach(img => {
-                img.style.maxWidth = imageMode ? '500px' : '0px';
-                img.style.width = imageMode ? '500px' : '0px';
+                img.style.maxWidth = imageMode ? '600px' : '0px';
+                img.style.width = imageMode ? '600px' : '0px';
                 img.style.height = 'auto';
             });
 
