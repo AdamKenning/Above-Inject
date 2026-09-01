@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.7.4
+// @version      2.7.5
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
 // @match        https://analyst.abovesurveying.com/analystSurvey.php?*
 // @icon         https://analyst.abovesurveying.com/img/logo@2x.png
 
-// @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css?v=2.7.4
+// @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css?v=2.7.5
 // @grant GM_getResourceText
 // @grant GM_info
 
@@ -345,7 +345,10 @@ if(localStorage.getItem('disableInject') !== 'true'){
         function updatePageIndicator(){
             const activePage = document.querySelector('#dataTable_paginate li.active a');
             const indicator = document.querySelector('#pageIndicator');
-            if (activePage && indicator) {indicator.textContent = activePage.textContent.trim();}
+
+            const nextLi = document.querySelector('#dataTable_next');
+            const totalPageLink = nextLi?.previousElementSibling?.querySelector('a');
+            if(activePage && indicator && totalPageLink) indicator.textContent = `${activePage.textContent.trim()} / ${totalPageLink.textContent.trim()}`;
         }
 
         // =========================================================
