@@ -340,11 +340,21 @@ IMAGE MODE
 .image-priority-mode .thumbnail {
     width: 100%;
     overflow: hidden !important;
+
+    margin: 5px 0;
+    padding: 0;
+
     border-radius: 20px !important;
 
-    margin: 0px 0px 5px 0px;
-    padding: 2px;
+    box-shadow: 0 0 0 0 #368EE0;
+    transition: box-shadow 0.1s ease;
 }
+
+.image-priority-mode .thumbnail:hover {
+    box-shadow: 0 0 0 5px #368EE0;
+}
+
+
 
 .image-priority-mode .thumbnail img {
     width: 100%;
@@ -352,7 +362,6 @@ IMAGE MODE
 
     display: block;
 
-    border-radius: 20px !important;
     margin: 0px;
     padding: 0px;
 
