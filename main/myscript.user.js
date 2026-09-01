@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.7.7
+// @version      2.7.8
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
 // @match        https://analyst.abovesurveying.com/analystSurvey.php?*
 // @icon         https://analyst.abovesurveying.com/img/logo@2x.png
 
-// @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css?v=2.7.6
+// @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css?v=2.7.8
 // @grant GM_getResourceText
 // @grant GM_info
 

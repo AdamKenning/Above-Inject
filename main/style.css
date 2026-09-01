@@ -254,6 +254,22 @@ DATA MODE
     padding:0px !important;
 }
 
+.data-priority-mode .thumbnail {
+    width: 100%;
+    overflow: hidden !important;
+    margin: 0px 0;
+    padding: 0px;
+}
+
+.data-priority-mode .thumbnail img {
+    width: 100%;
+    height: auto;
+    display: none;
+    margin: 0px;
+    padding: 0px;
+
+}
+
 /* =========================================================
 IMAGE MODE
 ========================================================= */
@@ -342,10 +358,11 @@ IMAGE MODE
     overflow: hidden !important;
 
     margin: 5px 0;
-    padding: 0;
+    padding: 0px;
 
     border-radius: 20px !important;
 
+    background:#368EE0;
     box-shadow: 0 0 0 0 #368EE0;
     transition: box-shadow 0.1s ease;
 }
@@ -353,7 +370,6 @@ IMAGE MODE
 .image-priority-mode .thumbnail:hover {
     box-shadow: 0 0 0 5px #368EE0;
 }
-
 
 
 .image-priority-mode .thumbnail img {
