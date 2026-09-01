@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.7.8
+// @version      2.7.9
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
 // @match        https://analyst.abovesurveying.com/analystSurvey.php?*
 // @icon         https://analyst.abovesurveying.com/img/logo@2x.png
 
-// @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css?v=2.7.8
+// @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css?v=2.7.9
 // @grant GM_getResourceText
 // @grant GM_info
 
@@ -337,8 +337,8 @@ if(localStorage.getItem('disableInject') !== 'true'){
             table.classList.add(imageMode ? 'image-priority-mode' : 'data-priority-mode');
 
             document.querySelectorAll('#dataTable tbody img').forEach(img => {
-                img.style.maxWidth = imageMode ? '600px' : '0px';
-                img.style.width = imageMode ? '600px' : '0px';
+                img.style.maxWidth = imageMode ? '600px' : '35px';
+                img.style.width = imageMode ? '600px' : '35px';
                 img.style.height = 'auto';
             });
 
@@ -373,23 +373,25 @@ if(localStorage.getItem('disableInject') !== 'true'){
                 const cells = row.querySelectorAll('td');
                 if (cells.length < 6) return;
                 const anomalyType = cells[1].textContent.trim();
-                const deltaTm = parseFloat(cells[5].textContent.trim());
+
+                const peakTemp = parseFloat(cells[3].textContent.trim());
+                const refTemp = parseFloat(cells[4].textContent.trim());
+                const gradient = parseFloat(cells[5].textContent.trim());
 
                 // Hot Spot / Multiple Hot Cells < 4
-                if((anomalyType === 'Hot Spot' || anomalyType === 'Multiple Hot Cells') && !isNaN(deltaTm) && deltaTm < 4){
+                if((anomalyType === 'Hot Spot' || anomalyType === 'Multiple Hot Cells') && !isNaN(gradient) && gradient < 4){
                     row.classList.add('ak-warning');
                 }
 
                 // Heated Junction Box < 7
-                if(anomalyType === 'Heated Junction Box' && !isNaN(deltaTm) && deltaTm < 7){
+                if(anomalyType === 'Heated Junction Box' && !isNaN(gradient) && gradient < 7){
                     row.classList.add('ak-warning');
                 }
 
                 // Missing Module / Tracker should always have ΔTm = 0
-                if((anomalyType === 'Missing Module' || anomalyType === 'Tracker') && !isNaN(deltaTm) && deltaTm !== 0){
+                if ((anomalyType === 'Missing Module' || anomalyType === 'Tracker') && (!isNaN(peakTemp) && peakTemp !== 0 || !isNaN(refTemp) && refTemp !== 0)) {
                     row.classList.add('ak-warning');
                 }
-
             });
         }
 
