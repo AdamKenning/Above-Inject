@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      2.7.9
+// @version      2.7.10
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
 // @match        https://analyst.abovesurveying.com/analystSurvey.php?*
 // @icon         https://analyst.abovesurveying.com/img/logo@2x.png
 
-// @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css?v=2.7.9
+// @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css?v=2.7.10
 // @grant GM_getResourceText
 // @grant GM_info
 
@@ -45,7 +45,6 @@ function addKillSwitch(){
     else {window.addEventListener('DOMContentLoaded', () => {document.body.appendChild(toggleBtn);});}
 }
 addKillSwitch()
-
 
 // Version info
 async function checkForUpdates(){
@@ -107,6 +106,18 @@ async function checkForUpdates(){
 }
 checkForUpdates();
 
+//LazyLoad
+const lazyImageObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+        const img = entry.target;
+        if(entry.isIntersecting && !img.src && img.dataset.realSrc) img.src = img.dataset.realSrc;
+        else{
+            const rect = img.getBoundingClientRect();
+            if(rect.bottom < -window.innerHeight || rect.top > window.innerHeight * 2) img.removeAttribute('src');
+        }
+    });
+},{rootMargin: '1000px'});
+
 // Main Logic
 if(localStorage.getItem('disableInject') !== 'true'){
     // Change to last used tab
@@ -128,13 +139,19 @@ if(localStorage.getItem('disableInject') !== 'true'){
     // =========================================================
     // Main Logic
     // =========================================================
-
     if(localStorage.getItem('darkMode') === 'true'){document.documentElement.classList.add('dark-mode');}
-
 
     const mainObserver = new MutationObserver((mutations, obs) => {
         const table = document.querySelector('#dataTable');
         if (!table) return;
+
+        // Turn on the lazy load
+        document.querySelectorAll('#dataTable img').forEach(img => {
+            if (img.dataset.lazyBound) return;
+            img.dataset.lazyBound = 'true';
+            img.dataset.realSrc = img.src;
+            lazyImageObserver.observe(img);
+        });
 
         // =========================================================
         // Toolbar
@@ -288,7 +305,14 @@ if(localStorage.getItem('disableInject') !== 'true'){
 
         function hardFlushImageCache() {
             const cacheBuster = `${Date.now()}-${Math.random()}`;
-            const images = document.querySelectorAll('#dataTable img');
+            const images = [...document.querySelectorAll('#dataTable img')];
+            images.sort((a, b) => getPriority(a) - getPriority(b));
+            function getPriority(img) {
+                const rect = img.getBoundingClientRect();
+                if (rect.bottom > 0 && rect.top < window.innerHeight) return 0;
+                if (rect.top >= window.innerHeight) return rect.top;
+                return 1000000 + Math.abs(rect.top);
+            }
 
             const observer = new IntersectionObserver(entries => {
                 entries.forEach(entry => {
@@ -303,22 +327,27 @@ if(localStorage.getItem('disableInject') !== 'true'){
                 });
             },{rootMargin: '1000px'});
 
-            images.forEach(img => {
-                const src = img.currentSrc || img.src;
-                if (!src) return;
-                img.dataset.realSrc = src;
-                const w = img.naturalWidth;
-                const h = img.naturalHeight;
-                if (w && h){img.parentElement.style.aspectRatio = `${w}/${h}`;}
-                img.removeAttribute('src'); // force unload
-                if(img.getBoundingClientRect().top < window.innerHeight * 2){
-                    const url = new URL(src, location.href);
-                    url.searchParams.set('_akcache', cacheBuster);
-                    img.src = url.href;
-                }else{
-                    observer.observe(img);
-                }
-            });
+            function processBatch(start = 0) {
+                const batchSize = 20;
+                const batch = images.slice(start, start + batchSize);
+                batch.forEach(img => {
+                    const src = img.currentSrc || img.src;
+                    if (!src) return;
+                    img.dataset.realSrc = src;
+                    const w = img.naturalWidth;
+                    const h = img.naturalHeight;
+                    if (w && h) img.parentElement.style.aspectRatio = `${w}/${h}`;
+                    img.removeAttribute('src');
+                    const top = img.getBoundingClientRect().top;
+                    if (top > -500 && top < window.innerHeight * 2) {
+                        const url = new URL(src, location.href);
+                        url.searchParams.set('_akcache', cacheBuster);
+                        img.src = url.href;
+                    }else observer.observe(img);
+                });
+                if(start + batchSize < images.length) requestIdleCallback(() => processBatch(start + batchSize));
+            }
+            processBatch();
         }
 
 
@@ -482,8 +511,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
         // =========================================================
 
         const tbody = table.querySelector('tbody');
-
-        if (tbody) {
+        if(tbody){
             const tbodyObserver = new MutationObserver(() => {
                 applyLayout();
                 runDataChecks();

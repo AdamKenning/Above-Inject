@@ -42,11 +42,55 @@ UPDATE BUTTON
 STICKY HEADER / TABLE LOOK
 ========================================================= */
 thead{
-    position:sticky;
-    top:32px;
-    background:white;
-    z-index:1050;
+    position: sticky;
+    top: 32px;
+    background: white;
+    z-index: 1050;
 }
+
+thead, thead tr, thead th{
+    overflow: visible !important;
+}
+
+
+thead .select2-selection--multiple{
+    max-height: 30px;
+    overflow: hidden !important;
+}
+
+thead .select2-container--open .select2-selection--multiple{
+    max-height: none;
+    overflow: visible !important;
+}
+
+thead .select2-container--open .select2-selection__rendered{
+    overflow: visible !important;
+
+    position: absolute;
+    z-index: 999999;
+
+    min-width: 150px;
+    padding: 4px 8px;
+
+    background: #fff;
+    border: 1px solid #ccc;
+}
+
+.select2-container--open .select2-dropdown{
+    min-width: 150px !important;
+    z-index: 999999 !important;
+
+}
+
+.select2-container--open .select2-results__options{
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.select2-container--open .select2-results__options::-webkit-scrollbar{
+    display: none;
+}
+
 
 
 td{
