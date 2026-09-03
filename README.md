@@ -35,13 +35,18 @@ To update your local instance of the script for new features, click to check for
 
 ## Major Updates
 
-### 20/08/26 - 2.0.0 (Caravanserai)
+### 3.0.0: --------- (03/09/26)
+Refinement of the platform, adding installation guides, integrated update management, and separate JS/CSS versioning for more reliable maintenance and deployment. Navigation and workflow improvements include quick page controls, automatic tab restoration after reloads, a temporary disable option for troubleshooting, and More anomaly amounts per page optoins (E.g. 500, 1k) for larger reviews.
+
+Data Mode enhanced with the horizontal return of anomaly editing controls and additional columns visibility improvements, while Image Mode gains variable cursor-based zooming and improved support for constrained layouts. Basic anomaly detection indicators have been introduced to flag common issues (E.g. HS/MHC/Missing Modules/Tracker Gradients), alongside image cache management and lazy reloading to reduce internal server load. General interface updates and visual refinements have also been applied throughout to improve overall usability and responsiveness.
+
+### 2.0.0: Phenomenon (20/08/26)
 
 Migration to centralised GitHub/Tampermonkey distribution, allowing simpler installation and future easy update roll outs. Includes requested features and general quality-of-life improvements. Several columns that had previously been removed have been restored based on analyst feedback. Data Mode once again displays the full dataset, with columns reorganised for improved usability.
 
 Added a basic dark mode option using CSS colour inversion, with the chosen preference stored between sessions. Filter widths are now fixed to prevent column resizing during use. Row heights have been reduced to maximise the amount of visible data on screen, and sticky header behaviour has been updated to provide more consistent results across different monitor sizes and resolutions.
 
-### 18/08/26 - 1.0.0 (Abraxas)
+### 1.0.0: Abraxas (18/08/26) 
 
 Introduced a bimodal Image/Data view system. Image Mode prioritises image size and visibility for reference checking and visual review tasks. Data Mode focuses on maximising tabular information for gradient checking and other data-driven workflows.
 
