@@ -24,13 +24,14 @@ See [setup For Chrome](misc/chrome/setup.md)
 
 To update your local instance of the script for new features, click to check for updates here
 
-![](imgs/4.png)
+![](imgs/0.png)
 
 ## Sample Imgs
 
 ![](imgs/1.png)
 ![](imgs/2.png)
 ![](imgs/3.png)
+![](imgs/4.png)
 
 ## Major Updates
 
