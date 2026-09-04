@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      3.0.0
+// @version      3.0.1
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -184,7 +184,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
                         <button class="ak-toolbar-button" id="darkModeBtn"> </button>
                         <button class="ak-toolbar-button" id="zoomLevelBtn"> </button>
                         <button class="ak-toolbar-button" id="flushCacheBtn"> Flush Cache </button>
-                        <button class="ak-toolbar-button" id="tmpBtn"> feature 5? </button>
+                        <button class="ak-toolbar-button" id="snapRowBtn"> Snap Row </button>
                     </div>
 
                     <div class="ak-nav-group">
@@ -392,6 +392,27 @@ if(localStorage.getItem('disableInject') !== 'true'){
             if(activePage && indicator && totalPageLink) indicator.textContent = `${activePage.textContent.trim()} / ${totalPageLink.textContent.trim()}`;
         }
 
+        function snapToNextRow() {
+            const rows = [...document.querySelectorAll('#dataTable tbody tr')];
+            if (!rows.length) return;
+            const headerOffset = 100;
+            if (currentRowIndex === null) {
+                let smallestDistance = Infinity;
+                rows.forEach((row, index) => {
+                    const distance = Math.abs(row.getBoundingClientRect().top - headerOffset);
+                    if (distance < smallestDistance) {
+                        smallestDistance = distance;
+                        currentRowIndex = index;
+                    }
+                });
+            } else currentRowIndex = Math.min(currentRowIndex + 1, rows.length - 1);
+            const targetRow = rows[currentRowIndex];
+            window.scrollBy({
+                top: targetRow.getBoundingClientRect().top - headerOffset,
+                behavior: 'auto'
+            });
+        }
+
         // =========================================================
         // Data checks
         // =========================================================
@@ -434,6 +455,10 @@ if(localStorage.getItem('disableInject') !== 'true'){
         bindImageZoom();
         updatePageIndicator();
 
+        let currentRowIndex = null;
+
+        document.addEventListener('keydown', e => {snapToNextRow();});
+
         const imageButton = document.querySelector('#imageModeBtn');
         if(imageButton && !imageButton.dataset.akBound){
             imageButton.dataset.akBound = 'true';
@@ -472,6 +497,13 @@ if(localStorage.getItem('disableInject') !== 'true'){
                 flushCacheButton.textContent = 'Flushing...';
                 setTimeout(() => {flushCacheButton.textContent = 'Flush Cache';}, 1500);
             });
+        }
+
+        const snapRowBtn = document.querySelector('#snapRowBtn');
+        if (snapRowBtn && !snapRowBtn.dataset.akBound) {
+            snapRowBtn.dataset.akBound = 'true';
+            snapRowBtn.title = 'Snap to next row ( \'\\\' )';
+            snapRowBtn.addEventListener('click', () => {snapToNextRow();});
         }
 
         // nav stuff
