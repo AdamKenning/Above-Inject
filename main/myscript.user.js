@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      3.1.2
+// @version      3.1.3
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -397,7 +397,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
         function snapToNextRow(down = true){
             const rows = [...document.querySelectorAll('#dataTable tbody tr')];
             if (!rows.length) return;
-            const headerOffset = 100;
+            const headerOffset = 102;
             let currentRowIndex = 0;
             let smallestDistance = Infinity;
             rows.forEach((row, index) => {
