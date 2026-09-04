@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      3.1.3
+// @version      3.1.4
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
 // @match        https://analyst.abovesurveying.com/analystSurvey.php?*
 // @icon         https://analyst.abovesurveying.com/img/logo@2x.png
 
-// @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css?v=3.0.0
+// @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css?v=3.1.4
 // @grant GM_getResourceText
 // @grant GM_info
 
@@ -470,6 +470,10 @@ if(localStorage.getItem('disableInject') !== 'true'){
         document.addEventListener('keydown', e => {
             if (e.key === 'q') snapToNextRow(false);
             if (e.key === 'e') snapToNextRow(true);
+            if (e.key === 'c' || e.key === 'C') document.documentElement.classList.add('ak-contrast-mode');
+        });
+        document.addEventListener('keyup', e => {
+            if (e.key === 'c' || e.key === 'C') document.documentElement.classList.remove('ak-contrast-mode');
         });
 
         const imageButton = document.querySelector('#imageModeBtn');

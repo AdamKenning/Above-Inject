@@ -5,11 +5,23 @@ Dark Mode
 html {transition: filter 0.5s ease;}
 img, video, canvas {transition: filter 0.5s ease;}
 
+/* Page Dark*/
 html.dark-mode {filter: invert(1);}
 
+/* Img Dark*/
 html.dark-mode img,
 html.dark-mode video,
-html.dark-mode canvas {filter: invert(1);}
+html.dark-mode canvas{filter: invert(1);}
+
+/* Img Contrast */
+html.ak-contrast-mode img,
+html.ak-contrast-mode video,
+html.ak-contrast-mode canvas{filter: contrast(2);}
+
+/* Img Dark + Contrast */
+html.dark-mode.ak-contrast-mode img,
+html.dark-mode.ak-contrast-mode video,
+html.dark-mode.ak-contrast-mode canvas{filter: invert(1) contrast(2);}
 
 /* =========================================================
 GENERAL CLEANUP
