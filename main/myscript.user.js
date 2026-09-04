@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      3.1.0
+// @version      3.1.1
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -392,25 +392,21 @@ if(localStorage.getItem('disableInject') !== 'true'){
             if(activePage && indicator && totalPageLink) indicator.textContent = `${activePage.textContent.trim()} / ${totalPageLink.textContent.trim()}`;
         }
 
-        function snapToNextRow() {
+        function snapToNextRow(down = true){
             const rows = [...document.querySelectorAll('#dataTable tbody tr')];
             if (!rows.length) return;
             const headerOffset = 100;
-            if (currentRowIndex === null) {
-                let smallestDistance = Infinity;
-                rows.forEach((row, index) => {
-                    const distance = Math.abs(row.getBoundingClientRect().top - headerOffset);
-                    if (distance < smallestDistance) {
-                        smallestDistance = distance;
-                        currentRowIndex = index;
-                    }
-                });
-            } else currentRowIndex = Math.min(currentRowIndex + 1, rows.length - 1);
-            const targetRow = rows[currentRowIndex];
-            window.scrollBy({
-                top: targetRow.getBoundingClientRect().top - headerOffset,
-                behavior: 'auto'
+            let currentRowIndex = 0;
+            let smallestDistance = Infinity;
+            rows.forEach((row, index) => {
+                const distance = Math.abs(row.getBoundingClientRect().top - headerOffset);
+                if (distance < smallestDistance) {
+                    smallestDistance = distance;
+                    currentRowIndex = index;
+                }
             });
+            const targetIndex = down ? Math.min(currentRowIndex + 1, rows.length - 1) : Math.max(currentRowIndex - 1, 0);
+            window.scrollBy({top: rows[targetIndex].getBoundingClientRect().top - headerOffset, behavior: 'auto'});
         }
 
         // =========================================================
@@ -458,8 +454,8 @@ if(localStorage.getItem('disableInject') !== 'true'){
         let currentRowIndex = null;
 
         document.addEventListener('keydown', e => {
-            if (e.key !== '\\') return;
-            snapToNextRow();
+            if (e.key === 'q') snapToNextRow(false);
+            if (e.key === 'e') snapToNextRow(true);
         });
 
         const imageButton = document.querySelector('#imageModeBtn');
@@ -505,7 +501,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
         const snapRowBtn = document.querySelector('#snapRowBtn');
         if (snapRowBtn && !snapRowBtn.dataset.akBound) {
             snapRowBtn.dataset.akBound = 'true';
-            snapRowBtn.title = 'Snap to next row ( \'\\\' )';
+            snapRowBtn.title = 'Snap to next row (q\e)';
             snapRowBtn.addEventListener('click', () => {snapToNextRow();});
         }
 
@@ -532,7 +528,13 @@ if(localStorage.getItem('disableInject') !== 'true'){
         const pageUpBtn = document.querySelector('#pageUpBtn');
         if (pageUpBtn && !pageUpBtn.dataset.akBound) {
             pageUpBtn.dataset.akBound = 'true';
-            pageUpBtn.addEventListener('click', () => {document.querySelector('#dataTable_wrapper')?.scrollIntoView({ behavior: 'smooth' });});
+            pageUpBtn.addEventListener('click', () => {
+                const firstRow = document.querySelector('#dataTable tbody tr');
+                if (!firstRow) return;
+                const headerOffset = 100;
+                window.scrollBy({top: firstRow.getBoundingClientRect().top - headerOffset, behavior: 'smooth'});
+                currentRowIndex = 0;
+            });
         }
 
         const pageDownBtn = document.querySelector('#pageDownBtn');
@@ -568,3 +570,4 @@ if(localStorage.getItem('disableInject') !== 'true'){
         subtree: true
     });
 }
+
