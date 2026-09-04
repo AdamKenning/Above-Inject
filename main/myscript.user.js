@@ -470,12 +470,9 @@ if(localStorage.getItem('disableInject') !== 'true'){
         document.addEventListener('keydown', e => {
             if (e.key === 'q') snapToNextRow(false);
             if (e.key === 'e') snapToNextRow(true);
-            if (e.key === 'c' || e.key === 'C') document.documentElement.classList.add('ak-contrast-mode');
+            if (e.key === 'c' || e.key === 'C') document.documentElement.classList.toggle('ak-contrast-mode');
         });
-        document.addEventListener('keyup', e => {
-            if (e.key === 'c' || e.key === 'C') document.documentElement.classList.remove('ak-contrast-mode');
-        });
-
+        
         const imageButton = document.querySelector('#imageModeBtn');
         if(imageButton && !imageButton.dataset.akBound){
             imageButton.dataset.akBound = 'true';
