@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      3.1.1
+// @version      3.1.2
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -232,6 +232,8 @@ if(localStorage.getItem('disableInject') !== 'true'){
         let darkMode = localStorage.getItem('darkMode') === 'true';
         if(localStorage.getItem('imageZoomLevel') === null){localStorage.setItem('imageZoomLevel', '0');}
         let imageZoomLevel = Number(localStorage.getItem('imageZoomLevel'));
+        if(localStorage.getItem('snapMode') === null){localStorage.setItem('snapMode', 'false');}
+        let snapMode = localStorage.getItem('snapMode') === 'true';
 
         // =========================================================
         // Features
@@ -409,6 +411,17 @@ if(localStorage.getItem('disableInject') !== 'true'){
             window.scrollBy({top: rows[targetIndex].getBoundingClientRect().top - headerOffset, behavior: 'auto'});
         }
 
+        function bindSnapWheel() {
+            if (window.akSnapWheelBound) return;
+            window.akSnapWheelBound = true;
+            document.addEventListener('wheel', e => {
+                if (e.shiftKey) return;
+                if (!snapMode) return;
+                e.preventDefault();
+                snapToNextRow(e.deltaY > 0);
+            }, { passive: false });
+        }
+
         // =========================================================
         // Data checks
         // =========================================================
@@ -449,6 +462,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
         applyDarkMode();
         runDataChecks();
         bindImageZoom();
+        bindSnapWheel();
         updatePageIndicator();
 
         let currentRowIndex = null;
@@ -501,8 +515,13 @@ if(localStorage.getItem('disableInject') !== 'true'){
         const snapRowBtn = document.querySelector('#snapRowBtn');
         if (snapRowBtn && !snapRowBtn.dataset.akBound) {
             snapRowBtn.dataset.akBound = 'true';
-            snapRowBtn.title = 'Snap to next row (q\e)';
-            snapRowBtn.addEventListener('click', () => {snapToNextRow();});
+            snapRowBtn.title = 'Snap to next row with Q/E (or mouse)';
+            snapRowBtn.textContent = snapMode ? 'Snap On' : 'Snap Off';
+            snapRowBtn.addEventListener('click', () => {
+                snapMode = !snapMode;
+                localStorage.setItem('snapMode', snapMode);
+                snapRowBtn.textContent = snapMode ? 'Snap On' : 'Snap Off';
+            });
         }
 
         // nav stuff
@@ -553,6 +572,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
                 applyLayout();
                 runDataChecks();
                 bindImageZoom();
+                bindSnapWheel();
                 updatePageIndicator();
             });
 
