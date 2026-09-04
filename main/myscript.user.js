@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      3.1.4
+// @version      3.1.5
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -479,6 +479,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
         const imageButton = document.querySelector('#imageModeBtn');
         if(imageButton && !imageButton.dataset.akBound){
             imageButton.dataset.akBound = 'true';
+            imageButton.title = 'contrast boost with C';
             imageButton.addEventListener('click', () => {
                 imageMode = !imageMode;
                 localStorage.setItem('imagePriorityMode',imageMode);
