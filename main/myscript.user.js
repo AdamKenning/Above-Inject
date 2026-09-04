@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      3.1.5
+// @version      3.1.6
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -472,7 +472,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
             if (e.key === 'e') snapToNextRow(true);
             if (e.key === 'c' || e.key === 'C') document.documentElement.classList.toggle('ak-contrast-mode');
         });
-        
+
         const imageButton = document.querySelector('#imageModeBtn');
         if(imageButton && !imageButton.dataset.akBound){
             imageButton.dataset.akBound = 'true';
