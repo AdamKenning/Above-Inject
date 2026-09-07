@@ -227,7 +227,7 @@ input[type=number]::-webkit-outer-spin-button{
 .ak-toolbar-button:active{transform:translateY(-2px);}
 
 .ak-page-indicator{
-    width: 70px;
+    width: 100px;
     height:28px;
 
     display:flex;
@@ -329,17 +329,6 @@ DATA MODE
 /* =========================================================
 IMAGE MODE
 ========================================================= */
-
-#dataTable.image-priority-mode thead .select2-container {
-    width: 50px !important;
-    min-width: 50px !important;
-    max-width: 50px !important;
-
-    height: 30px !important;
-    min-height: 30px !important;
-    max-height: 30px !important;
-}
-
 .image-priority-mode th:nth-child(4),
 .image-priority-mode td:nth-child(4),
 .image-priority-mode th:nth-child(5),
@@ -356,47 +345,29 @@ IMAGE MODE
 }
 
 .image-priority-mode th:nth-child(1),
-.image-priority-mode td:nth-child(1),
+.image-priority-mode td:nth-child(1){
+    padding:3px!important;
+}
+
 .image-priority-mode th:nth-child(2),
 .image-priority-mode td:nth-child(2),
-.image-priority-mode th:nth-child(6),
-.image-priority-mode td:nth-child(6){
-    width:20px!important;
-    padding-right:0!important;
-}
-
 .image-priority-mode th:nth-child(3),
-.image-priority-mode td:nth-child(3){
-    width:20px!important;
-    padding-right:0!important;
-}
-
+.image-priority-mode td:nth-child(3),
+.image-priority-mode th:nth-child(6),
+.image-priority-mode td:nth-child(6),
 .image-priority-mode th:nth-child(11),
-.image-priority-mode td:nth-child(11){
-    width:60px!important;
-    padding-right:0!important;
-}
-
+.image-priority-mode td:nth-child(11),
 .image-priority-mode th:nth-child(12),
 .image-priority-mode td:nth-child(12){
-    width:20px!important;
-    padding-right:0!important;
+    min-width:50px!important;
+    max-width:50px!important;
+    padding:3px!important;
+    overflow: hidden !important;
 }
 
 .image-priority-mode th:nth-child(9),
 .image-priority-mode td:nth-child(9),
 .image-priority-mode th:nth-child(10),
-.image-priority-mode td:nth-child(10){
-    width:500px!important;
-    min-width:500px!important;
-}
-
-.image-priority-mode{
-    table-layout:auto!important;
-    width:100%!important;
-}
-
-.image-priority-mode td:nth-child(9),
 .image-priority-mode td:nth-child(10){
     width:45%!important;
 }
@@ -404,20 +375,17 @@ IMAGE MODE
 .image-priority-mode td:nth-child(9) img,
 .image-priority-mode td:nth-child(10) img{
     width:100%!important;
-    height:auto!important;
     max-width:none!important;
-    max-height:none!important;
+    transition: transform 0.4s ease;
+    transform-origin: center center;
 }
 
 .image-priority-mode .thumbnail {
     width: 100%;
     overflow: hidden !important;
-
     margin: 5px 0;
-    padding: 0px;
-
+    padding: 0;
     border-radius: 20px !important;
-
     background:#368EE0;
     box-shadow: 0 0 0 0 #368EE0;
     transition: box-shadow 0.1s ease;
@@ -425,34 +393,6 @@ IMAGE MODE
 
 .image-priority-mode .thumbnail:hover {
     box-shadow: 0 0 0 5px #368EE0;
-}
-
-
-.image-priority-mode .thumbnail img {
-    width: 100%;
-    height: auto;
-
-    display: block;
-
-    margin: 0px;
-    padding: 0px;
-
-    transition: transform 0.4s ease;
-    transform-origin: center center;
-}
-
-.image-priority-mode th:nth-child(4),
-.image-priority-mode td:nth-child(4){
-    width:60px!important;
-    min-width:60px!important;
-    max-width:60px!important;
-}
-
-.image-priority-mode th:nth-child(12),
-.image-priority-mode td:nth-child(12){
-    width:70px!important;
-    min-width:70px!important;
-    max-width:70px!important;
 }
 
 .image-priority-mode .btn-group-vertical {

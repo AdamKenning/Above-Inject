@@ -352,8 +352,6 @@ if(localStorage.getItem('disableInject') !== 'true'){
             processBatch();
         }
 
-
-
         function applyDarkMode() {
             document.documentElement.classList.toggle('dark-mode',darkMode);
             const btn = document.querySelector('#darkModeBtn');
@@ -388,10 +386,9 @@ if(localStorage.getItem('disableInject') !== 'true'){
         function updatePageIndicator(){
             const activePage = document.querySelector('#dataTable_paginate li.active a');
             const indicator = document.querySelector('#pageIndicator');
-
             const nextLi = document.querySelector('#dataTable_next');
             const totalPageLink = nextLi?.previousElementSibling?.querySelector('a');
-            if(activePage && indicator && totalPageLink) indicator.textContent = `${activePage.textContent.trim()} / ${totalPageLink.textContent.trim()}`;
+            if(activePage && indicator && totalPageLink) indicator.textContent = `P. ${activePage.textContent.trim()} / ${totalPageLink.textContent.trim()}`;
         }
 
         function snapToNextRow(down = true){

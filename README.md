@@ -18,9 +18,7 @@ Feedback, bug reports, and feature suggestions are welcome: [Issues & Suggestion
 
 Disable or uninstall any previous JS injection extensions, as they may conflict with this version.
 
-See [setup For Edge](misc/edge/setup.md)
-
-See [setup For Chrome](misc/chrome/setup.md)
+See [Setup](SETUP.md)
 
 To update your local instance of the script for new features, click to check for updates here
 
