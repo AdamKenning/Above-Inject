@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      3.1.6
+// @version      3.1.7
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -388,7 +388,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
             const indicator = document.querySelector('#pageIndicator');
             const nextLi = document.querySelector('#dataTable_next');
             const totalPageLink = nextLi?.previousElementSibling?.querySelector('a');
-            if(activePage && indicator && totalPageLink) indicator.textContent = `P. ${activePage.textContent.trim()} / ${totalPageLink.textContent.trim()}`;
+            if(activePage && indicator && totalPageLink) indicator.textContent = `p. ${activePage.textContent.trim()} / ${totalPageLink.textContent.trim()}`;
         }
 
         function snapToNextRow(down = true){
@@ -444,8 +444,9 @@ if(localStorage.getItem('disableInject') !== 'true'){
                     row.classList.add('ak-warning');
                 }
 
-                // Missing Module / Tracker should always have ΔTm = 0
-                if ((anomalyType === 'Missing Module' || anomalyType === 'Tracker') && (!isNaN(peakTemp) && peakTemp !== 0 || !isNaN(refTemp) && refTemp !== 0)) {
+                // Missing Module / Tracker / Visual should always have Peak & Ref temp = 0
+                if ((anomalyType === 'Missing Module' || anomalyType === 'Tracker' || anomalyType === 'Visual') &&
+                    (!isNaN(peakTemp) && peakTemp !== 0 || !isNaN(refTemp) && refTemp !== 0)) {
                     row.classList.add('ak-warning');
                 }
             });
