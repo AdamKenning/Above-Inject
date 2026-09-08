@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      3.1.7
+// @version      3.1.8
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -371,6 +371,19 @@ if(localStorage.getItem('disableInject') !== 'true'){
                 img.style.height = 'auto';
             });
 
+            // Hijack loacte button to open in new tab
+            document.addEventListener('click', e => {
+                const btn = e.target.closest('.locate');
+                if (!btn) return;
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                const surveyId = btn.getAttribute('surveyid');
+                const defectId = btn.getAttribute('defectid');
+                const url = `https://analyst.abovesurveying.com/analystAutoMapV2.php?surveyId=${surveyId}&defectId=${defectId}`;
+                window.open(url, '_blank');
+            }, true);
+
             const btn = document.querySelector('#imageModeBtn');
             if (btn){btn.textContent =imageMode ? 'Data  Mode' : 'Image Mode';}
 
@@ -412,10 +425,15 @@ if(localStorage.getItem('disableInject') !== 'true'){
             if (window.akSnapWheelBound) return;
             window.akSnapWheelBound = true;
             document.addEventListener('wheel', e => {
-                if (e.shiftKey) return;
-                if (!snapMode) return;
+                if(e.shiftKey) return;
+                if(!snapMode) return;
+                if (e.target.closest('.select2-dropdown') ||
+                    e.target.closest('.select2-results') ||
+                    e.target.closest('.select2-results__options')
+                ){return;}
                 e.preventDefault();
                 snapToNextRow(e.deltaY > 0);
+
             }, { passive: false });
         }
 
