@@ -1,3 +1,22 @@
+// ==UserScript==
+// @name         AboveInject
+// @namespace    https://github.com/AdamKenning
+// @version      3.1.8
+// @description  Feature addition / QOL changes to the Survey page of Solargain
+// @author       Adam K
+
+// @match        https://analyst.abovesurveying.com/analystSurvey.php?*
+// @icon         https://analyst.abovesurveying.com/img/logo@2x.png
+
+// @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css?v=3.1.4
+// @grant GM_getResourceText
+// @grant GM_info
+
+// @downloadURL https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js
+// @updateURL   https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js
+// ==/UserScript==
+
+
 // Kill Switch
 function addKillSwitch(){
     const toggleBtn = document.createElement('button');

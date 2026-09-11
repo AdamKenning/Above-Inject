@@ -11,15 +11,15 @@
 // @grant GM_getResourceText
 // @grant GM_info
 
-// @downloadURL https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/root.user.js
-// @updateURL   https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/root.user.js
+// @downloadURL https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/root.user.js
+// @updateURL   https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/root.user.js
 // ==/UserScript==
 
 const routes = [
     {
         match: location.pathname.includes('analystSurvey.php'),
-        js: 'https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/survey/script.js',
-        css: 'https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/survey/style.css'
+        js: 'https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey/script.js',
+        css:'https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey/style.css'
     }
     // {
     //     match: location.pathname.includes('analystAutoMapV2.php'),
