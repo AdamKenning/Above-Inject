@@ -1,17 +1,19 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      3.0.0
+// @version      3.1.8
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
-// @grant        GM_getResourceText
 
 // @match        https://analyst.abovesurveying.com/analystSurvey.php?*
 // @icon         https://analyst.abovesurveying.com/img/logo@2x.png
 
-// @resource     mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey/survey.css?v=2.7.2
-// @downloadURL          https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey/survey.user.js
-// @updateURL            https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey/survey.user.js
+// @resource mainCss https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/style.css?v=3.1.4
+// @grant GM_getResourceText
+// @grant GM_info
+
+// @downloadURL https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js
+// @updateURL   https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js
 // ==/UserScript==
 
 // Kill Switch
@@ -44,14 +46,12 @@ function addKillSwitch(){
 }
 addKillSwitch()
 
-
 // Version info
 async function checkForUpdates(){
     const VERSION = GM_info.script.version;
     try{
         const response = await fetch(
-            'https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey/survey.user.js?t=' + Date.now(), 
-            {cache: 'no-store'}
+            'https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js?t=' + Date.now(), {cache: 'no-store'}
         );
         const text = await response.text();
         const match = text.match(/@version\s+([0-9.]+)/);
@@ -93,7 +93,7 @@ async function checkForUpdates(){
                 btn.style.color = '#000000';
             }
 
-            btn.onclick = () => {window.open('https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/survey/survey.user.js','_blank');};
+            btn.onclick = () => {window.open('https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/myscript.user.js','_blank');};
         }else{
             btn.textContent = `v${VERSION}`;
             btn.title = `Installed: ${VERSION}\nLatest:     ${githubVersion}\nNo new updates`;
@@ -106,37 +106,52 @@ async function checkForUpdates(){
 }
 checkForUpdates();
 
+//LazyLoad
+const lazyImageObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+        const img = entry.target;
+        if(entry.isIntersecting && !img.src && img.dataset.realSrc) img.src = img.dataset.realSrc;
+        else{
+            const rect = img.getBoundingClientRect();
+            if(rect.bottom < -window.innerHeight || rect.top > window.innerHeight * 2) img.removeAttribute('src');
+        }
+    });
+},{rootMargin: '1000px'});
+
 // Main Logic
 if(localStorage.getItem('disableInject') !== 'true'){
     // Change to last used tab
-    function switchLastTab(){
-        window.addEventListener('load', () => {
-            const lastTab = localStorage.getItem('akLastTab') || '#defectList';
-            setTimeout(() => {document.querySelector(`a[href="${lastTab}"]`)?.click();}, 100);
-            document.querySelectorAll('.nav.nav-tabs a').forEach(tab => {
-                tab.addEventListener('click', () => {localStorage.setItem('akLastTab', tab.getAttribute('href'));});
-            });
+    window.addEventListener('load', () => {
+        const lastTab = localStorage.getItem('akLastTab') || '#defectList';
+        setTimeout(() => {document.querySelector(`a[href="${lastTab}"]`)?.click();}, 100);
+        document.querySelectorAll('.nav.nav-tabs a').forEach(tab => {
+            tab.addEventListener('click', () => {localStorage.setItem('akLastTab', tab.getAttribute('href'));});
         });
-    }
-    switchLastTab();
-    
+    });
 
     // Load CSS
     const css = GM_getResourceText("mainCss");
     const style = document.createElement("style");
+
     style.textContent = css;
     document.head.appendChild(style);
 
     // =========================================================
     // Main Logic
     // =========================================================
-
     if(localStorage.getItem('darkMode') === 'true'){document.documentElement.classList.add('dark-mode');}
-
 
     const mainObserver = new MutationObserver((mutations, obs) => {
         const table = document.querySelector('#dataTable');
         if (!table) return;
+
+        // Turn on the lazy load
+        document.querySelectorAll('#dataTable img').forEach(img => {
+            if (img.dataset.lazyBound) return;
+            img.dataset.lazyBound = 'true';
+            img.dataset.realSrc = img.src;
+            lazyImageObserver.observe(img);
+        });
 
         // =========================================================
         // Toolbar
@@ -169,7 +184,7 @@ if(localStorage.getItem('disableInject') !== 'true'){
                         <button class="ak-toolbar-button" id="darkModeBtn"> </button>
                         <button class="ak-toolbar-button" id="zoomLevelBtn"> </button>
                         <button class="ak-toolbar-button" id="flushCacheBtn"> Flush Cache </button>
-                        <button class="ak-toolbar-button" id="tmpBtn"> feature 5? </button>
+                        <button class="ak-toolbar-button" id="snapRowBtn"> Snap Row </button>
                     </div>
 
                     <div class="ak-nav-group">
@@ -217,6 +232,8 @@ if(localStorage.getItem('disableInject') !== 'true'){
         let darkMode = localStorage.getItem('darkMode') === 'true';
         if(localStorage.getItem('imageZoomLevel') === null){localStorage.setItem('imageZoomLevel', '0');}
         let imageZoomLevel = Number(localStorage.getItem('imageZoomLevel'));
+        if(localStorage.getItem('snapMode') === null){localStorage.setItem('snapMode', 'false');}
+        let snapMode = localStorage.getItem('snapMode') === 'true';
 
         // =========================================================
         // Features
@@ -232,11 +249,10 @@ if(localStorage.getItem('disableInject') !== 'true'){
                         img.style.transform = `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
                     });
                 });
+
                 document.addEventListener('keyup', e => {
-                    if (e.key !== 'Shift') return;
-                    document.querySelectorAll('#dataTable .thumbnail img').forEach(img => {
-                        img.style.transform = 'scale(1)';
-                    });
+                    if(e.key !== 'Shift') return;
+                    document.querySelectorAll('#dataTable .thumbnail img').forEach(img => {img.style.transform = 'scale(1)';});
                 });
             }
 
@@ -256,9 +272,20 @@ if(localStorage.getItem('disableInject') !== 'true'){
                     img.style.transform = `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
                 });
 
+                container.addEventListener('mouseenter', e => {
+                    if(!e.shiftKey || imageZoomLevel === 0) return;
+                    clearTimeout(img._originResetTimer);
+                    img.style.transformOrigin = `${img.dataset.lastX}% ${img.dataset.lastY}%`;
+                    img.style.transform = `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
+                });
+
                 container.addEventListener('mouseleave', () => {
-                    img.style.transformOrigin = 'center center';
+                    img.style.transformOrigin = `${img.dataset.lastX}% ${img.dataset.lastY}%`;
                     img.style.transform = 'scale(1)';
+                    clearTimeout(img._originResetTimer);
+                    img._originResetTimer = setTimeout(() => {
+                        if(!container.matches(':hover')) img.style.transformOrigin = 'center center';
+                    }, 500);
                 });
 
                 container.addEventListener('wheel', e => {
@@ -266,19 +293,28 @@ if(localStorage.getItem('disableInject') !== 'true'){
                     e.preventDefault();
                     if(e.deltaY < 0) imageZoomLevel = Math.min(imageZoomLevel + 1, 3);
                     else imageZoomLevel = Math.max(imageZoomLevel - 1, 0);
+
                     localStorage.setItem('imageZoomLevel', imageZoomLevel);
                     const zoomBtn = document.querySelector('#zoomLevelBtn');
                     if(zoomBtn) zoomBtn.textContent = ['Zoom Off', 'Zoom 2x', 'Zoom 4x', 'Zoom 8x'][imageZoomLevel];
+
                     img.style.transformOrigin = `${img.dataset.lastX}% ${img.dataset.lastY}%`;
-                    img.style.transform = imageZoomLevel === 0 ? 'scale(1)' : `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
+
+                    img.style.transform = imageZoomLevel === 0 ? 'scale(1)': `scale(${[1, 2, 4, 8][imageZoomLevel]})`;
                 }, { passive: false });
             });
-
         }
 
         function hardFlushImageCache() {
             const cacheBuster = `${Date.now()}-${Math.random()}`;
-            const images = document.querySelectorAll('#dataTable img');
+            const images = [...document.querySelectorAll('#dataTable img')];
+            images.sort((a, b) => getPriority(a) - getPriority(b));
+            function getPriority(img) {
+                const rect = img.getBoundingClientRect();
+                if (rect.bottom > 0 && rect.top < window.innerHeight) return 0;
+                if (rect.top >= window.innerHeight) return rect.top;
+                return 1000000 + Math.abs(rect.top);
+            }
 
             const observer = new IntersectionObserver(entries => {
                 entries.forEach(entry => {
@@ -293,22 +329,28 @@ if(localStorage.getItem('disableInject') !== 'true'){
                 });
             },{rootMargin: '1000px'});
 
-            images.forEach(img => {
-                const src = img.currentSrc || img.src;
-                if (!src) return;
-                img.dataset.realSrc = src;
-                img.removeAttribute('src'); // force unload
-                if(img.getBoundingClientRect().top < window.innerHeight * 2){
-                    const url = new URL(src, location.href);
-                    url.searchParams.set('_akcache', cacheBuster);
-                    img.src = url.href;
-                }else{
-                    observer.observe(img);
-                }
-            });
+            function processBatch(start = 0) {
+                const batchSize = 20;
+                const batch = images.slice(start, start + batchSize);
+                batch.forEach(img => {
+                    const src = img.currentSrc || img.src;
+                    if (!src) return;
+                    img.dataset.realSrc = src;
+                    const w = img.naturalWidth;
+                    const h = img.naturalHeight;
+                    if (w && h) img.parentElement.style.aspectRatio = `${w}/${h}`;
+                    img.removeAttribute('src');
+                    const top = img.getBoundingClientRect().top;
+                    if (top > -500 && top < window.innerHeight * 2) {
+                        const url = new URL(src, location.href);
+                        url.searchParams.set('_akcache', cacheBuster);
+                        img.src = url.href;
+                    }else observer.observe(img);
+                });
+                if(start + batchSize < images.length) requestIdleCallback(() => processBatch(start + batchSize));
+            }
+            processBatch();
         }
-
-
 
         function applyDarkMode() {
             document.documentElement.classList.toggle('dark-mode',darkMode);
@@ -324,10 +366,23 @@ if(localStorage.getItem('disableInject') !== 'true'){
             table.classList.add(imageMode ? 'image-priority-mode' : 'data-priority-mode');
 
             document.querySelectorAll('#dataTable tbody img').forEach(img => {
-                img.style.maxWidth = imageMode ? '500px' : '0px';
-                img.style.width = imageMode ? '500px' : '0px';
+                img.style.maxWidth = imageMode ? '600px' : '35px';
+                img.style.width = imageMode ? '600px' : '35px';
                 img.style.height = 'auto';
             });
+
+            // Hijack loacte button to open in new tab
+            document.addEventListener('click', e => {
+                const btn = e.target.closest('.locate');
+                if (!btn) return;
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                const surveyId = btn.getAttribute('surveyid');
+                const defectId = btn.getAttribute('defectid');
+                const url = `https://analyst.abovesurveying.com/analystAutoMapV2.php?surveyId=${surveyId}&defectId=${defectId}`;
+                window.open(url, '_blank');
+            }, true);
 
             const btn = document.querySelector('#imageModeBtn');
             if (btn){btn.textContent =imageMode ? 'Data  Mode' : 'Image Mode';}
@@ -344,7 +399,42 @@ if(localStorage.getItem('disableInject') !== 'true'){
         function updatePageIndicator(){
             const activePage = document.querySelector('#dataTable_paginate li.active a');
             const indicator = document.querySelector('#pageIndicator');
-            if (activePage && indicator) {indicator.textContent = activePage.textContent.trim();}
+            const nextLi = document.querySelector('#dataTable_next');
+            const totalPageLink = nextLi?.previousElementSibling?.querySelector('a');
+            if(activePage && indicator && totalPageLink) indicator.textContent = `p. ${activePage.textContent.trim()} / ${totalPageLink.textContent.trim()}`;
+        }
+
+        function snapToNextRow(down = true){
+            const rows = [...document.querySelectorAll('#dataTable tbody tr')];
+            if (!rows.length) return;
+            const headerOffset = 102;
+            let currentRowIndex = 0;
+            let smallestDistance = Infinity;
+            rows.forEach((row, index) => {
+                const distance = Math.abs(row.getBoundingClientRect().top - headerOffset);
+                if (distance < smallestDistance) {
+                    smallestDistance = distance;
+                    currentRowIndex = index;
+                }
+            });
+            const targetIndex = down ? Math.min(currentRowIndex + 1, rows.length - 1) : Math.max(currentRowIndex - 1, 0);
+            window.scrollBy({top: rows[targetIndex].getBoundingClientRect().top - headerOffset, behavior: 'auto'});
+        }
+
+        function bindSnapWheel() {
+            if (window.akSnapWheelBound) return;
+            window.akSnapWheelBound = true;
+            document.addEventListener('wheel', e => {
+                if(e.shiftKey) return;
+                if(!snapMode) return;
+                if (e.target.closest('.select2-dropdown') ||
+                    e.target.closest('.select2-results') ||
+                    e.target.closest('.select2-results__options')
+                ){return;}
+                e.preventDefault();
+                snapToNextRow(e.deltaY > 0);
+
+            }, { passive: false });
         }
 
         // =========================================================
@@ -357,23 +447,26 @@ if(localStorage.getItem('disableInject') !== 'true'){
                 const cells = row.querySelectorAll('td');
                 if (cells.length < 6) return;
                 const anomalyType = cells[1].textContent.trim();
-                const deltaTm = parseFloat(cells[5].textContent.trim());
+
+                const peakTemp = parseFloat(cells[3].textContent.trim());
+                const refTemp = parseFloat(cells[4].textContent.trim());
+                const gradient = parseFloat(cells[5].textContent.trim());
 
                 // Hot Spot / Multiple Hot Cells < 4
-                if((anomalyType === 'Hot Spot' || anomalyType === 'Multiple Hot Cells') && !isNaN(deltaTm) && deltaTm < 4){
+                if((anomalyType === 'Hot Spot' || anomalyType === 'Multiple Hot Cells') && !isNaN(gradient) && gradient < 4){
                     row.classList.add('ak-warning');
                 }
 
                 // Heated Junction Box < 7
-                if(anomalyType === 'Heated Junction Box' && !isNaN(deltaTm) && deltaTm < 7){
+                if(anomalyType === 'Heated Junction Box' && !isNaN(gradient) && gradient < 7){
                     row.classList.add('ak-warning');
                 }
 
-                // Missing Module / Tracker should always have ΔTm = 0
-                if((anomalyType === 'Missing Module' || anomalyType === 'Tracker') && !isNaN(deltaTm) && deltaTm !== 0){
+                // Missing Module / Tracker / Visual should always have Peak & Ref temp = 0
+                if ((anomalyType === 'Missing Module' || anomalyType === 'Tracker' || anomalyType === 'Visual') &&
+                    (!isNaN(peakTemp) && peakTemp !== 0 || !isNaN(refTemp) && refTemp !== 0)) {
                     row.classList.add('ak-warning');
                 }
-
             });
         }
 
@@ -385,11 +478,21 @@ if(localStorage.getItem('disableInject') !== 'true'){
         applyDarkMode();
         runDataChecks();
         bindImageZoom();
+        bindSnapWheel();
         updatePageIndicator();
+
+        let currentRowIndex = null;
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'q') snapToNextRow(false);
+            if (e.key === 'e') snapToNextRow(true);
+            if (e.key === 'c' || e.key === 'C') document.documentElement.classList.toggle('ak-contrast-mode');
+        });
 
         const imageButton = document.querySelector('#imageModeBtn');
         if(imageButton && !imageButton.dataset.akBound){
             imageButton.dataset.akBound = 'true';
+            imageButton.title = 'contrast boost with C';
             imageButton.addEventListener('click', () => {
                 imageMode = !imageMode;
                 localStorage.setItem('imagePriorityMode',imageMode);
@@ -427,6 +530,18 @@ if(localStorage.getItem('disableInject') !== 'true'){
             });
         }
 
+        const snapRowBtn = document.querySelector('#snapRowBtn');
+        if (snapRowBtn && !snapRowBtn.dataset.akBound) {
+            snapRowBtn.dataset.akBound = 'true';
+            snapRowBtn.title = 'Snap to next row with Q/E (or mouse)';
+            snapRowBtn.textContent = snapMode ? 'Snap On' : 'Snap Off';
+            snapRowBtn.addEventListener('click', () => {
+                snapMode = !snapMode;
+                localStorage.setItem('snapMode', snapMode);
+                snapRowBtn.textContent = snapMode ? 'Snap On' : 'Snap Off';
+            });
+        }
+
         // nav stuff
 
         const prevPageBtn = document.querySelector('#prevPageBtn');
@@ -450,7 +565,13 @@ if(localStorage.getItem('disableInject') !== 'true'){
         const pageUpBtn = document.querySelector('#pageUpBtn');
         if (pageUpBtn && !pageUpBtn.dataset.akBound) {
             pageUpBtn.dataset.akBound = 'true';
-            pageUpBtn.addEventListener('click', () => {document.querySelector('#dataTable_wrapper')?.scrollIntoView({ behavior: 'smooth' });});
+            pageUpBtn.addEventListener('click', () => {
+                const firstRow = document.querySelector('#dataTable tbody tr');
+                if (!firstRow) return;
+                const headerOffset = 100;
+                window.scrollBy({top: firstRow.getBoundingClientRect().top - headerOffset, behavior: 'smooth'});
+                currentRowIndex = 0;
+            });
         }
 
         const pageDownBtn = document.querySelector('#pageDownBtn');
@@ -464,12 +585,12 @@ if(localStorage.getItem('disableInject') !== 'true'){
         // =========================================================
 
         const tbody = table.querySelector('tbody');
-
-        if (tbody) {
+        if(tbody){
             const tbodyObserver = new MutationObserver(() => {
                 applyLayout();
                 runDataChecks();
                 bindImageZoom();
+                bindSnapWheel();
                 updatePageIndicator();
             });
 
@@ -487,3 +608,4 @@ if(localStorage.getItem('disableInject') !== 'true'){
         subtree: true
     });
 }
+
