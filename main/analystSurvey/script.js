@@ -17,18 +17,17 @@ const mainObserver = new MutationObserver((mutations, obs) => {
     const table = document.querySelector('#dataTable');
     if (!table) return;
 
-    // Turn on the lazy load
-    document.querySelectorAll('#dataTable img').forEach(img => {
-        if (img.dataset.lazyBound) return;
-        img.dataset.lazyBound = 'true';
-        img.dataset.realSrc = img.src;
-        lazyImageObserver.observe(img);
-    });
+    // Local storage setting
+    if(localStorage.getItem('imagePriorityMode') === null){localStorage.setItem('imagePriorityMode','true');}
+    let imageMode = localStorage.getItem('imagePriorityMode') === 'true';
+    if(localStorage.getItem('darkMode') === null){localStorage.setItem('darkMode', 'true');}
+    let darkMode = localStorage.getItem('darkMode') === 'true';
+    if(localStorage.getItem('imageZoomLevel') === null){localStorage.setItem('imageZoomLevel', '0');}
+    let imageZoomLevel = Number(localStorage.getItem('imageZoomLevel'));
+    if(localStorage.getItem('snapMode') === null){localStorage.setItem('snapMode', 'false');}
+    let snapMode = localStorage.getItem('snapMode') === 'true';
 
-    // =========================================================
-    // Toolbar
-    // =========================================================
-
+    // Features
     function addToolbar() {
         const row = document.querySelector('#dataTable_wrapper > .row:first-child');
         if (!row || row.querySelector('.ak-toolbar')) return;
@@ -72,10 +71,6 @@ const mainObserver = new MutationObserver((mutations, obs) => {
         left.after(middle);
     }
 
-    // =========================================================
-    // Page Length Select
-    // =========================================================
-
     function customisePageLengths() {
         const select = document.querySelector('select[name="dataTable_length"]') || document.querySelector('.dataTables_length select');
         if (!select || select.dataset.akPatched) return;
@@ -93,23 +88,6 @@ const mainObserver = new MutationObserver((mutations, obs) => {
         select.value = '100';
         select.dispatchEvent(new Event('change', { bubbles: true }));
     }
-
-    // =========================================================
-    // State
-    // =========================================================
-
-    if(localStorage.getItem('imagePriorityMode') === null){localStorage.setItem('imagePriorityMode','true');}
-    let imageMode = localStorage.getItem('imagePriorityMode') === 'true';
-    if(localStorage.getItem('darkMode') === null){localStorage.setItem('darkMode', 'true');}
-    let darkMode = localStorage.getItem('darkMode') === 'true';
-    if(localStorage.getItem('imageZoomLevel') === null){localStorage.setItem('imageZoomLevel', '0');}
-    let imageZoomLevel = Number(localStorage.getItem('imageZoomLevel'));
-    if(localStorage.getItem('snapMode') === null){localStorage.setItem('snapMode', 'false');}
-    let snapMode = localStorage.getItem('snapMode') === 'true';
-
-    // =========================================================
-    // Features
-    // =========================================================
 
     function bindImageZoom(){
         if(!window.akShiftZoomBound){
@@ -309,10 +287,6 @@ const mainObserver = new MutationObserver((mutations, obs) => {
         }, { passive: false });
     }
 
-    // =========================================================
-    // Data checks
-    // =========================================================
-
     function runDataChecks() {
         document.querySelectorAll('#dataTable tbody tr').forEach(row => {
             row.classList.remove('ak-warning');
@@ -342,10 +316,7 @@ const mainObserver = new MutationObserver((mutations, obs) => {
         });
     }
 
-    // =========================================================
-    // Initial Setup
-    // =========================================================
-
+    // Setup
     applyLayout();
     applyDarkMode();
     runDataChecks();
@@ -355,12 +326,14 @@ const mainObserver = new MutationObserver((mutations, obs) => {
 
     let currentRowIndex = null;
 
+    // Keybinds
     document.addEventListener('keydown', e => {
         if (e.key === 'q') snapToNextRow(false);
         if (e.key === 'e') snapToNextRow(true);
         if (e.key === 'c' || e.key === 'C') document.documentElement.classList.toggle('ak-contrast-mode');
     });
 
+    // Feature Button Assigning
     const imageButton = document.querySelector('#imageModeBtn');
     if(imageButton && !imageButton.dataset.akBound){
         imageButton.dataset.akBound = 'true';
@@ -414,8 +387,7 @@ const mainObserver = new MutationObserver((mutations, obs) => {
         });
     }
 
-    // nav stuff
-
+    // Nav Button Assigning
     const prevPageBtn = document.querySelector('#prevPageBtn');
     if (prevPageBtn && !prevPageBtn.dataset.akBound) {
         prevPageBtn.dataset.akBound = 'true';
@@ -452,10 +424,7 @@ const mainObserver = new MutationObserver((mutations, obs) => {
         pageDownBtn.addEventListener('click', () => {window.scrollTo({top: document.body.scrollHeight,behavior: 'smooth'});});
     }
 
-    // =========================================================
     // Monitor Table Changes
-    // =========================================================
-
     const tbody = table.querySelector('tbody');
     if(tbody){
         const tbodyObserver = new MutationObserver(() => {
@@ -471,7 +440,6 @@ const mainObserver = new MutationObserver((mutations, obs) => {
             subtree: true
         });
     }
-
     obs.disconnect();
 });
 
