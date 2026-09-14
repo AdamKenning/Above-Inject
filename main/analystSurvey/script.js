@@ -88,18 +88,6 @@ async function checkForUpdates(){
 }
 checkForUpdates();
 
-//LazyLoad
-const lazyImageObserver = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-        const img = entry.target;
-        if(entry.isIntersecting && !img.src && img.dataset.realSrc) img.src = img.dataset.realSrc;
-        else{
-            const rect = img.getBoundingClientRect();
-            if(rect.bottom < -window.innerHeight || rect.top > window.innerHeight * 2) img.removeAttribute('src');
-        }
-    });
-},{rootMargin: '1000px'});
-
 // Main Logic
 if(localStorage.getItem('disableInject') !== 'true'){
     // Change to last used tab
@@ -110,13 +98,6 @@ if(localStorage.getItem('disableInject') !== 'true'){
             tab.addEventListener('click', () => {localStorage.setItem('akLastTab', tab.getAttribute('href'));});
         });
     });
-
-    // Load CSS
-    const css = GM_getResourceText("mainCss");
-    const style = document.createElement("style");
-
-    style.textContent = css;
-    document.head.appendChild(style);
 
     // =========================================================
     // Main Logic
