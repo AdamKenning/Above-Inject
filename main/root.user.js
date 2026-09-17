@@ -12,15 +12,24 @@
 // @updateURL   https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/root.user.js
 // ==/UserScript==
 
-const pageName = location.pathname.split('/').pop().replace('.php', '');
+let enabled, left, path;
+if(location.href.includes("analystSurvey")){
+    ({enabled, left, path} = {
+        enabled: localStorage.getItem('akEnableAnalystSurvey') !== 'false', left: '15%',
+        path: 'https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/analystSurvey/'
+    });
 
-const supportedPages = {
-    analystSurvey: {left: '15%'},
-    //analystPortal: {left: '25%'},
-    //analystAutoMapV2: {left: '10%'}
-};
-const pageConfig = supportedPages[pageName];
-if (!pageConfig) return;
+    // Debug making it always true
+    localStorage.setItem('akEnableAnalystSurvey', 'true');
+}else if(location.href.includes("analystAutoMapV2")){
+    ({enabled, left, path} = {
+        enabled: localStorage.getItem('akEnableAutoMap') !== 'false', left: '10%',
+        path: 'https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/analystAutoMapV2/'
+    });
+
+}else{
+    return;
+}
 
 // Kill Switch
 function addKillSwitch(){
@@ -38,7 +47,7 @@ function addKillSwitch(){
 
         position: fixed;
         top: 2px;
-        left: ${pageConfig.left};
+        left: ${left};
         transform: translateX(-50%);
         z-index: 999999;
     `;
@@ -84,7 +93,7 @@ async function checkForUpdates(){
 
                     position: fixed;
                     top: 2px;
-                    left: calc(${pageConfig.left} + 120px);
+                    left: calc(${left} + 120px);
                     transform: translateX(-50%);
                     z-index: 999999;
                 `;
@@ -103,28 +112,24 @@ async function checkForUpdates(){
 }
 checkForUpdates();
 
-if(localStorage.getItem('disableInject') !== 'true'){
-    const path = `https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/${pageName}/` ;
-    const script_js_path = `${path}script.js`;
-    const style_css_path = `${path}style.css`;
-
-    // Fetch CSS
-    fetch(style_css_path + '?t=' + Date.now()).then(r => {
-        if (!r.ok) throw new Error(`CSS failed: ${r.status}`);
-        return r.text();
-    }).then(css => {
+if(localStorage.getItem('disableInject') !== 'true' && enabled){
+    Promise.all([
+        fetch(`${path}style.css?t=` + Date.now(), {cache: 'no-store'}).then(r => {
+            if (!r.ok) throw new Error(`CSS failed: ${r.status}`);
+            return r.text();
+        }),
+        fetch(`${path}script.js?t=` + Date.now(), {cache: 'no-store'}).then(r => {
+            if (!r.ok) throw new Error(`JS failed: ${r.status}`);
+            return r.text();
+        })
+    ]).then(([css, js]) => {
         const style = document.createElement('style');
         style.textContent = css;
         document.head.appendChild(style);
-    }).catch(console.error);
-
-    // Fetch JS
-    fetch(script_js_path + '?t=' + Date.now()).then(r => {
-        if (!r.ok) throw new Error(`JS failed: ${r.status}`);
-        return r.text();
-    }).then(js => {
         const script = document.createElement('script');
         script.textContent = js;
         document.head.appendChild(script);
+
+        console.log("Resources loaded");
     }).catch(console.error);
 }
