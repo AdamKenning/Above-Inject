@@ -2,17 +2,16 @@
 function restoreLastTab() {
     const lastTab = localStorage.getItem('akLastTab') || '#defectList';
     let restored = false;
-    [100, 250, 500, 1000, 2000].forEach(delay => {
+    for(let i = 1; i <= 20; i++) {
         setTimeout(() => {
             if (restored) return;
             const tab = document.querySelector(`a[href="${lastTab}"]`);
             if (!tab) return;
             restored = true;
             tab.click();
-            console.log(`Restored tab after ${delay}ms`);
-        }, delay);
-    });
-
+            console.log(`Restored tab after ${i * 100}ms`);
+        }, i * 100);
+    }
     document.querySelectorAll('.nav.nav-tabs a').forEach(tab => {
         if (tab.dataset.akBound) return;
         tab.dataset.akBound = 'true';
