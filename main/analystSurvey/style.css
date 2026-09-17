@@ -8,10 +8,6 @@ img, video, canvas {transition: filter 0.5s ease;}
 /* Page Dark*/
 html.dark-mode {filter: invert(1);}
 
-/* Menu Dark*/
-html.dark-mode #ak-menu {filter: invert(1);}
-
-
 /* Img Dark */
 html.dark-mode img,
 html.dark-mode video,
