@@ -1,3 +1,5 @@
+const VERSION = "3.1.8";
+
 // Change to last used tab
 function restoreLastTab() {
     const lastTab = localStorage.getItem('akLastTab') || '#defectList';
