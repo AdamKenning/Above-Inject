@@ -1,7 +1,18 @@
 // Change to last used tab
 function restoreLastTab() {
     const lastTab = localStorage.getItem('akLastTab') || '#defectList';
-    setTimeout(() => {document.querySelector(`a[href="${lastTab}"]`)?.click();}, 1000);
+    let restored = false;
+    [100, 250, 500, 1000, 2000].forEach(delay => {
+        setTimeout(() => {
+            if (restored) return;
+            const tab = document.querySelector(`a[href="${lastTab}"]`);
+            if (!tab) return;
+            restored = true;
+            tab.click();
+            console.log(`Restored tab after ${delay}ms`);
+        }, delay);
+    });
+
     document.querySelectorAll('.nav.nav-tabs a').forEach(tab => {
         if (tab.dataset.akBound) return;
         tab.dataset.akBound = 'true';
