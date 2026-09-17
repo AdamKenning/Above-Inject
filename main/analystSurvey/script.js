@@ -1,12 +1,14 @@
-
 // Change to last used tab
-window.addEventListener('load', () => {
+function restoreLastTab() {
     const lastTab = localStorage.getItem('akLastTab') || '#defectList';
-    setTimeout(() => {document.querySelector(`a[href="${lastTab}"]`)?.click();}, 100);
+    setTimeout(() => {document.querySelector(`a[href="${lastTab}"]`)?.click();}, 1000);
     document.querySelectorAll('.nav.nav-tabs a').forEach(tab => {
+        if (tab.dataset.akBound) return;
+        tab.dataset.akBound = 'true';
         tab.addEventListener('click', () => {localStorage.setItem('akLastTab', tab.getAttribute('href'));});
     });
-});
+}
+restoreLastTab();
 
 // =========================================================
 // Main Logic
