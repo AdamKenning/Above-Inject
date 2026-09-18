@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Above.D.Inject
 // @namespace    https://github.com/AdamKenning
-// @version      2.0.0
+// @version      2.0.1
 // @description  Feature addition / QOL changes
 // @author       Adam K
 
@@ -21,17 +21,6 @@ const DEV_MODE = false;
 let pending_update = false;
 let latest_version = GM_info.script.version;
 let github_version = null;
-
-async function checkForUpdates() {
-    try {
-        const response = await fetch('https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/root.user.js?t=' + Date.now(), { cache: 'no-store' });
-        const text = await response.text();
-        const match = text.match(/@version\s+([0-9.]+)/);
-        if (!match) return;
-        github_version = match[1];
-        if (github_version !== latest_version) pending_update = true;
-    } catch (err) {console.error('Version check failed', err);}
-}
 
 class Module {
     static BASE_PATH = 'https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/'
@@ -118,6 +107,16 @@ if(!curentModule || (!curentModule.stateLive && !DEV_MODE)) return;
 
 if(localStorage.getItem('disableInject') !== 'true' && curentModule.stateEnabled) curentModule.load();
 
+async function checkForUpdates() {
+    try {
+        const response = await fetch('https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/root.user.js?t=' + Date.now(), { cache: 'no-store' });
+        const text = await response.text();
+        const match = text.match(/@version\s+([0-9.]+)/);
+        if (!match) return;
+        github_version = match[1];
+        if (github_version !== latest_version) pending_update = true;
+    } catch (err) {console.error('Version check failed', err);}
+}
 
 async function addMenu() {
     const menu = document.createElement('div');
