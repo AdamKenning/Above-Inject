@@ -37,6 +37,9 @@ div.box.box-bordered.box-color.teal.details{padding:0;margin:0;}
 div.box-content.defectList.dataTables_wrapper{padding:0;}
 div.col-xs-12{padding:0!important;}
 .text-right{text-align:left;}
+#mainNav{
+    max-height: 20px;
+}
 
 /* =========================================================
 STICKY HEADER / TABLE LOOK
