@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Above.D.Inject
 // @namespace    https://github.com/AdamKenning
-// @version      2.0.1
+// @version      2.0.2
 // @description  Feature addition / QOL changes
 // @author       Adam K
 
@@ -99,13 +99,14 @@ const modules = [
 ];
 
 // Debug Force Overide
+modules.find(m => m.name === "analystSurvey").stateLive = true;
 modules.find(m => m.name === "analystAutoMapV2").stateLive = false;
 
 // Main Stuff
 const curentModule = modules.find(m => location.href.includes(m.name));
-if(!curentModule || (!curentModule.stateLive && !DEV_MODE)) return;
 
-if(localStorage.getItem('disableInject') !== 'true' && curentModule.stateEnabled) curentModule.load();
+if(!curentModule || (!curentModule.stateLive && !DEV_MODE)) return;
+if(curentModule.stateEnabled) curentModule.load();
 
 async function checkForUpdates() {
     try {
