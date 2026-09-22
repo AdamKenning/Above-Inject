@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Above.D.Inject
 // @namespace    https://github.com/AdamKenning
-// @version      2.0.2
+// @version      2.0.3
 // @description  Feature addition / QOL changes
 // @author       Adam K
 
@@ -126,7 +126,7 @@ async function addMenu() {
         background: #ffffff;
         border: 2px solid #ffffff;
         border-radius: 4px;
-        width: 200px;
+        width: 140px;
 
         position: fixed;
         top: ${curentModule.posDown};
@@ -143,19 +143,19 @@ async function addMenu() {
     const header = document.createElement('div');
     header.style.cssText = `
         display: grid;
-        grid-template-columns: 150px 50px;
+        grid-template-columns: 40px 150px;
         align-items: center;
 
         border-radius: 4px;
-        padding: 2px 8px;
+        padding: 3px 3px;
         background: #dddddd;
 
         transition: grid-template-columns 0.2s ease;
     `;
 
+    const head_button = document.createElement('button');
     const head_name = document.createElement('span');
     const head_version = document.createElement('span');
-    const head_button = document.createElement('button');
 
 
     head_name.style.cssText = `
@@ -192,13 +192,17 @@ async function addMenu() {
     }
     updateHeader();
     head_version.textContent = `v${GM_info.script.version}`;
+    head_version.style.cssText = `
+        display: none;
+        text-align:right;
+    `
 
 
     head_button.textContent = 'INFO';
     head_button.title = 'Open Project Repo';
 
     head_button.style.cssText = `
-        display: none;
+        display: block;
         width: 35px;
         padding: 0;
         border: none;
@@ -210,7 +214,7 @@ async function addMenu() {
     head_button.onclick = () => {window.open('https://github.com/AdamKenning/Above-Inject','_blank');};
 
 
-    header.append(head_name, head_version, head_button);
+    header.append(head_button, head_name, head_version);
     menu.appendChild(header);
 
 
@@ -234,26 +238,26 @@ async function addMenu() {
     menu.addEventListener('mouseenter', () => {
         menu.style.width = '250px';
 
-        header.style.gridTemplateColumns = '150px 50px 50px';
+        header.style.gridTemplateColumns = '40px 150px 50px';
 
         details.style.maxHeight = '500px';
         details.style.opacity = '1';
-        details.style.marginTop = '10px';
+        details.style.marginTop = '5px';
 
-        head_button.style.display = 'block';
+        head_version.style.display = 'block';
     });
 
 
     menu.addEventListener('mouseleave', () => {
-        menu.style.width = '200px';
+        menu.style.width = '140px';
 
-        header.style.gridTemplateColumns = '150px 50px';
+        header.style.gridTemplateColumns = '40px 150px';
 
         details.style.maxHeight = '0';
         details.style.opacity = '0';
         details.style.marginTop = '0';
 
-        head_button.style.display = 'none';
+        head_version.style.display = 'none';
     });
 
     // Per Module
@@ -264,19 +268,19 @@ async function addMenu() {
         const row = document.createElement('div');
         row.style.cssText = `
             display:grid;
-            grid-template-columns:150px 50px 50px;
+            grid-template-columns: 40px 150px 50px;
             align-items:center;
 
             border-radius:4px;
-            padding:2px 8px;
+            padding:3px 3px;
             margin-top:2px;
 
             background:#dddddd;
         `;
 
+        const button = document.createElement('button');
         const name = document.createElement('span');
         const version = document.createElement('span');
-        const button = document.createElement('button');
 
         name.textContent = module.name;
 
@@ -293,7 +297,7 @@ async function addMenu() {
             text-overflow:ellipsis;
         `;
 
-        version.style.textAlign = 'left';
+        version.style.textAlign = 'right';
 
         button.style.cssText = `
             width:35px;
@@ -309,7 +313,7 @@ async function addMenu() {
             location.reload();
         });
 
-        row.append(name, version, button);
+        row.append(button, name, version);
         details.appendChild(row);
 
         // Fetch/cache version without holding up creation of the row
