@@ -58,7 +58,7 @@
             </p>
 
             <p>
-                <a href="https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/root.user.js"
+                <a href="https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/main/root.user.js"
                    target="_blank"
                    style="
                        display:inline-block;
