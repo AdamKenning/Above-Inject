@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AboveInject
 // @namespace    https://github.com/AdamKenning
-// @version      5.1.1
+// @version      5.1.2
 // @description  Feature addition / QOL changes to the Survey page of Solargain
 // @author       Adam K
 
@@ -51,7 +51,7 @@
             
             </p>
 
-            <img src="https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/temp/image.png" style="max-width:100%; border:1px solid ning/Above-Inject/main/root.user.js">
+            <img src="https://raw.githubusercontent.com/AdamKenning/Above-Inject/main/temp/image.png" style="max-width:100%; border:1px solid">
 
             <p>
                 Click below to install the new version.
