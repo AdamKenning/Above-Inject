@@ -2,7 +2,10 @@
 Dark Mode
 ========================================================= */
 
-html {transition: filter 0.5s ease;}
+html {
+    scrollbar-gutter: stable;
+    transition: filter 0.5s ease;
+}
 img, video, canvas {transition: filter 0.5s ease;}
 
 /* Page Dark*/
