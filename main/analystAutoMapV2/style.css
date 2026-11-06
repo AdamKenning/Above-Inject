@@ -1,0 +1,301 @@
+.horizontal .group-size-count,
+.horizontal .selected-modules-count {
+    display: flex !important;
+    align-items: center;
+    gap: 12px;
+}
+
+.horizontal .zone-display {
+    display: flex !important;
+    margin-left: auto;
+    font-weight: bold;
+    margin: 0;
+}
+
+#defectTypeFilterWrapper .select2-container {
+    width: 200px !important;
+}
+
+.leaflet-control-anomalyForm {
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    background-color: rgba(255,255,255,0.6) !important;
+    backdrop-filter: blur(2px) !important;
+}
+
+.leaflet-control-anomalyForm .form-group {
+    margin-bottom: 4px !important;
+}
+
+.leaflet-control-anomalyForm .form-control {
+    height: 26px !important;
+    padding: 2px 6px !important;
+    font-size: 12px !important;
+}
+
+.leaflet-control-anomalyForm .thumbnail img {
+    max-height: 230px;
+}
+
+.thermal-pane .thumbnail{
+    margin-bottom:0px !important;
+    background-color: rgba(255,255,255,0) !important;
+    backdrop-filter: blur(2px) !important;
+}
+
+.rgb-pane .thumbnail{
+    margin-bottom:0px !important;
+    background-color: rgba(255,255,255,0) !important;
+    backdrop-filter: blur(2px) !important;
+}
+
+.drag-bar {
+    display: flex;
+    align-items: stretch;
+}
+
+.layout-toggle {
+    margin: 10px 5px 0px 0px;
+    width: 30px;
+    height: 30px;
+    border: 1px solid;
+    background-color: #fff;
+    border-color: #ccc;
+    color: #333;
+    cursor: pointer;
+    flex-shrink: 0;
+    border-radius:3px;
+    align-content:center;
+    vertical-align: middle;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.layout-toggle:hover {
+    background: #3498db;
+    background-color: #e6e6e6;
+    border-color: #adadad;
+}
+
+.drag-bar h3.mode {
+    flex: 1;
+    margin: 0;
+    border-radius:3px
+}
+
+
+
+
+.leaflet-control-anomalyForm.horizontal {
+    width: 900px;
+}
+
+.leaflet-control-anomalyForm.horizontal .horizontal-wrapper {
+    display: flex;
+    gap: 10px;
+}
+
+.leaflet-control-anomalyForm.horizontal .left-pane {
+    width: 320px;
+    flex-shrink: 0;
+}
+
+.leaflet-control-anomalyForm.horizontal .thermal-pane,
+.leaflet-control-anomalyForm.horizontal .rgb-pane {
+    flex: 1;
+}
+
+.leaflet-control-anomalyForm.horizontal img {
+    width: 100%;
+    height: 270px;
+    object-fit: contain;
+}
+
+.leaflet-control-anomalyForm h3.mode {
+    color:#ffffff;
+    font-weight:400;
+    background-color: #3498db;
+    align-content:center;
+    cursor: grab;
+    user-select: none;
+    font-size: 14px;
+    padding: 4px 8px;
+    transition: background-color 0.1s ease;
+}
+
+.leaflet-control-anomalyForm h3.mode:hover {
+    background-color: #1f6fb2;
+}
+
+.leaflet-control-anomalyForm h3.mode.dragging {
+    cursor: grabbing;
+}
+
+.leaflet-control-anomalyForm {
+    box-shadow: 0 2px 10px rgba(0,0,0,.3);
+    border-radius: 4px;
+}
+
+.leaflet-control-anomalyForm.dragging {
+    box-shadow: 0 0 20px rgba(52,152,219,.7);
+}
+
+
+
+
+.horizontal select[name="defectTypeId"] {
+    width: calc(50% - 3px);
+    display: inline-block;
+    vertical-align: top;
+}
+
+.horizontal select[name="rootCauseId"] {
+    width: 100% !important;
+}
+
+
+
+.left-pane .form-group{
+    justify-content: space-between !important;
+}
+
+.horizontal .left-pane > .form-group:has(select[name="rootCauseId"]) {
+    width: calc(50% - 3px);
+    display: inline-block;
+    margin-left: 6px;
+    vertical-align: top;
+}
+
+
+
+
+.form-horizontal .checkbox{
+    padding: 0px;
+    min-height:10px;
+}
+
+
+
+.horizontal .bottom-pane {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.horizontal .bottom-pane .form-group {
+    display: flex;
+    flex: 1;
+    margin: 0 !important;
+}
+
+.horizontal .bottom-pane [class*="col-xs-"] {
+    width: auto !important;
+    float: none !important;
+    padding: 0 2px;
+    flex: 1;
+}
+
+.bottom-pane .btn-block{
+    opacity: 1 !important;
+}
+.horizontal .bottom-pane button {
+    width: 100%;
+    height: 32px;
+}
+
+.zone-display {
+    text-align: center;
+    font-weight: bold;
+    color: #333;
+    font-size: 15px;
+    margin-bottom: 0px;
+    display: block !important;
+}
+
+
+
+
+body, body * {
+    transition: filter 0.3s ease;
+}
+
+body.anomaly-darkmode #ak-menu, body.anomaly-darkmode .map{
+filter: invert(1);
+}
+
+
+body.anomaly-darkmode path[fill-rule="evenodd"]{
+    fill-opacity: 0.6;
+    filter: invert(1);
+}
+
+body.anomaly-darkmode path[stroke="#13bf16"]{
+    fill-opacity: 0.2;
+    filter: invert(1);
+}
+
+
+
+body.anomaly-darkmode
+#map-init > div.leaflet-pane.leaflet-map-pane > div.leaflet-pane.leaflet-sgTable-pane > canvas{
+    filter: brightness(8);
+}
+
+body.anomaly-darkmode
+#map-init > div.leaflet-pane.leaflet-map-pane > div.leaflet-pane.leaflet-sgTableline-pane > canvas{
+    filter: brightness(8);
+}
+
+body.anomaly-darkmode #map-init > div.leaflet-pane.leaflet-map-pane > div.leaflet-pane.leaflet-sgRegister-pane > canvas{
+    filter: invert(1) opacity(0.7);
+}
+
+body.anomaly-darkmode
+#navigation{
+    filter: invert(1);
+}
+
+body.anomaly-darkmode #map-init > div.leaflet-control-container > div.leaflet-top.leaflet-left > div,
+body.anomaly-darkmode #map-init > div.leaflet-control-container > div.leaflet-bottom.leaflet-right > div.leaflet-control-hierarchy.info.leaflet-bar.collapsed.leaflet-control,
+body.anomaly-darkmode #map-init > div.leaflet-control-container > div.leaflet-top.leaflet-right > div.leaflet-control-flyByToolbar.leaflet-bar.leaflet-control,
+body.anomaly-darkmode #map-init > div.leaflet-control-container > div.leaflet-top.leaflet-right > div.leaflet-control-analystLayer.leaflet-bar.leaflet-control,
+body.anomaly-darkmode #map-init > div.leaflet-control-container > div.leaflet-bottom.leaflet-right > div.leaflet-control-legend.info.leaflet-bar.collapsed.leaflet-control,
+body.anomaly-darkmode #map-init > div.leaflet-control-container > div.leaflet-bottom.leaflet-right > div.leaflet-control-layers-panel.info.leaflet-bar.collapsed.leaflet-control,
+body.anomaly-darkmode #map-init > div.leaflet-control-container > div.leaflet-top.leaflet-right > div.leaflet-control-module-counter.leaflet-bar.leaflet-control{
+    box-shadow: 0 2px 10px rgba(255, 255, 255, .9);
+}
+
+
+body.anomaly-darkmode #addAnomalyForm > div.horizontal-wrapper > div.thermal-pane > div > img,
+body.anomaly-darkmode #addAnomalyForm > div.horizontal-wrapper > div.rgb-pane > div > img{
+    filter: invert(1);
+}
+
+
+body.anomaly-darkmode #map-init > div.leaflet-control-container > div.leaflet-bottom.leaflet-right > div.leaflet-control-legend.info.leaflet-bar.leaflet-control > div > i{
+    filter: invert(1);
+}
+
+body.anomaly-darkmode #navigation > div > div.navbar-header > a > img{
+    filter: invert(1);
+}
+
+body.anomaly-darkmode #ak-menu > div:nth-child(2) > div:nth-child(1) > button,
+body.anomaly-darkmode #ak-menu > div:nth-child(2) > div:nth-child(2) > button
+
+{
+    filter: invert(1);
+}
+
+
+
+body.anomaly-darkmode #map-init > div.leaflet-pane.leaflet-map-pane > div.leaflet-pane.leaflet-tile-pane > div:nth-child(1){
+    filter: invert(1);
+}
+
+body.anomaly-darkmode #map-init > div.leaflet-pane.leaflet-map-pane > div.leaflet-pane.leaflet-overlay-pane{
+    filter: invert(1) opacity(0.2) saturate(3);
+
+}
