@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Above.D.Inject
 // @namespace    https://github.com/AdamKenning
-// @version      2.0.3
+// @version      2.1.0
 // @description  Feature addition / QOL changes
 // @author       Adam K
 
@@ -100,7 +100,7 @@ const modules = [
 
 // Debug Force Overide
 modules.find(m => m.name === "analystSurvey").stateLive = true;
-modules.find(m => m.name === "analystAutoMapV2").stateLive = false;
+modules.find(m => m.name === "analystAutoMapV2").stateLive = true;
 
 // Main Stuff
 const curentModule = modules.find(m => location.href.includes(m.name));
