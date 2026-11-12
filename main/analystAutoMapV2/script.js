@@ -1,6 +1,6 @@
-const VERSION = "1.0.3";
-
-(function () {
+// Tooltips / keybinds
+function pjs_p1(){
+    // Keybind setting
     const KEYBINDS = {
         s: { id: "Save",action: "Save"},
         d: { id: "Delete",action: "Delete"},
@@ -11,16 +11,6 @@ const VERSION = "1.0.3";
     };
     let searchActive = false;
 
-    function updateTooltips() {
-        Object.entries(KEYBINDS).forEach(([key, bind]) => {
-            const button = document.getElementById(bind.id);
-            if (!button) return;
-            button.title = `${key.toUpperCase()} : ${bind.action}`;
-        });
-    }
-    updateTooltips();
-    new MutationObserver(updateTooltips).observe(document.body, {childList: true, subtree: true});
-
     document.addEventListener("keydown", (event) => {
         if (event.repeat) return;
         const input = document.querySelector('#findDefectNum input[name="defectNum"]');
@@ -29,7 +19,6 @@ const VERSION = "1.0.3";
         if (input && active === input) {
             if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();
-
                 // Submit defect
                 const input2 = document.querySelector('#findDefectNum input[name="defectNum"]');
                 if (!input2) return;
@@ -40,7 +29,6 @@ const VERSION = "1.0.3";
                 else form.requestSubmit?.();
                 searchActive = false;
                 input2.blur();
-
                 return;
             }
             if (["Backspace", "Delete", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "Tab"].includes(event.key)) return;
@@ -79,178 +67,193 @@ const VERSION = "1.0.3";
         const cleaned = input2.value.replace(/\D+/g, '');
         if (cleaned !== input2.value) input2.value = cleaned;
     });
-})();
 
-
-const panel = document.querySelector('.leaflet-control-anomalyForm');
-
-const form = panel.querySelector('form');
-const imageSection = form.querySelector('.image-section');
-
-const horizontalWrapper = document.createElement('div');
-horizontalWrapper.className = 'horizontal-wrapper';
-
-const leftPane = document.createElement('div');
-leftPane.className = 'left-pane';
-
-const thermalPane = document.createElement('div');
-thermalPane.className = 'thermal-pane';
-
-const rgbPane = document.createElement('div');
-rgbPane.className = 'rgb-pane';
-
-const bottomPane = document.createElement('div');
-bottomPane.className = 'bottom-pane';
-
-const group = document.querySelector('.group-size-count');
-if (group) group.childNodes[0].textContent = 'Group Size: ';
-const mods = document.querySelector('.selected-modules-count');
-if (mods) mods.childNodes[0].textContent = 'Mod Count: ';
-
-const counterGroup = document.querySelector('.selected-modules-count');
-counterGroup.parentNode.appendChild(document.querySelector('.zone-display'));
-counterGroup.parentNode.appendChild(document.querySelector('.group-size-count'));
-
-// move everything except imageSection
-Array.from(form.children).forEach(el => {
-
-    const hasButton =
-        el.querySelector?.('button');
-
-    if (el === imageSection) {
-        return;
+    // Hover = Keybinds
+    function updateTooltips() {
+        Object.entries(KEYBINDS).forEach(([key, bind]) => {
+            const button = document.getElementById(bind.id);
+            if (!button) return;
+            button.title = `${key.toUpperCase()} : ${bind.action}`;
+        });
     }
-
-    if (hasButton) {
-        bottomPane.appendChild(el);
-    } else {
-        leftPane.appendChild(el);
-    }
-});
-
-// split thumbnails
-const thumbs = imageSection.querySelectorAll('.thumbnail');
-
-if (thumbs.length >= 2) {
-    thermalPane.appendChild(thumbs[0]);
-    rgbPane.appendChild(thumbs[1]);
+    updateTooltips();
+    //new MutationObserver(updateTooltips).observe(document.body, {childList: true, subtree: true});
 }
+pjs_p1();
 
-// build layout
-horizontalWrapper.appendChild(leftPane);
-horizontalWrapper.appendChild(thermalPane);
-horizontalWrapper.appendChild(rgbPane);
+// Moved Around Stuff
+function js_p2(){
+    const panel = document.querySelector('.leaflet-control-anomalyForm');
 
-// add to form
-form.appendChild(horizontalWrapper);
-form.appendChild(bottomPane);
+    const form = panel.querySelector('form');
+    const imageSection = form.querySelector('.image-section');
 
+    const horizontalWrapper = document.createElement('div');
+    horizontalWrapper.className = 'horizontal-wrapper';
 
-function clampPanelToViewport() {
-    const maxX = Math.max(0, window.innerWidth - panel.offsetWidth - 20);
-    const maxY = Math.max(0, window.innerHeight - panel.offsetHeight);
+    const leftPane = document.createElement('div');
+    leftPane.className = 'left-pane';
 
-    const currentX = parseInt(panel.style.left, 10) || 0;
-    const currentY = parseInt(panel.style.top, 10) || 0;
+    const thermalPane = document.createElement('div');
+    thermalPane.className = 'thermal-pane';
 
-    panel.style.left = `${Math.min(currentX, maxX)}px`;
-    panel.style.top = `${Math.min(currentY, maxY)}px`;
+    const rgbPane = document.createElement('div');
+    rgbPane.className = 'rgb-pane';
 
-    localStorage.setItem('anomalyPanelX', panel.style.left);
-    localStorage.setItem('anomalyPanelY', panel.style.top);
-}
+    const bottomPane = document.createElement('div');
+    bottomPane.className = 'bottom-pane';
 
-window.addEventListener('resize', clampPanelToViewport);
+    const group = document.querySelector('.group-size-count');
+    if (group) group.childNodes[0].textContent = 'Group Size: ';
+    const mods = document.querySelector('.selected-modules-count');
+    if (mods) mods.childNodes[0].textContent = 'Mod Count: ';
 
-if (panel) {
-    panel.style.left = localStorage.getItem('anomalyPanelX') || '0px';
-    panel.style.top = localStorage.getItem('anomalyPanelY') || '0px';
+    const counterGroup = document.querySelector('.selected-modules-count');
+    counterGroup.parentNode.appendChild(document.querySelector('.zone-display'));
+    counterGroup.parentNode.appendChild(document.querySelector('.group-size-count'));
 
-    const handle = panel.querySelector('h3.mode');
+    // move everything except imageSection
+    Array.from(form.children).forEach(el => {
 
-    const toggleBtn = document.createElement('button');
-    toggleBtn.innerHTML = '⇆';
-    toggleBtn.title = 'Toggle Layout';
-    toggleBtn.className = 'layout-toggle';
-    handle.parentNode.insertBefore(toggleBtn, handle);
+        const hasButton =
+              el.querySelector?.('button');
 
-    const darkBtn = document.createElement('button');
-    darkBtn.innerHTML = 'D';
-    darkBtn.title = 'Toggle Dark Mode';
-    darkBtn.className = 'layout-toggle';
-    handle.parentNode.insertBefore(darkBtn, handle);
+        if (el === imageSection) {
+            return;
+        }
 
-    const dragBar = document.createElement('div');
-    dragBar.className = 'drag-bar';
-    handle.parentNode.insertBefore(dragBar, handle);
-    dragBar.appendChild(toggleBtn);
-    dragBar.appendChild(darkBtn);
-    dragBar.appendChild(handle);
-
-    toggleBtn.addEventListener('click', () => {
-        if (localStorage.getItem('anomalyPanelImagesHidden') === 'true') return;
-        panel.classList.toggle('horizontal');
-        localStorage.setItem(
-            'anomalyPanelHorizontal',
-            panel.classList.contains('horizontal')
-        );
-        requestAnimationFrame(clampPanelToViewport);
+        if (hasButton) {
+            bottomPane.appendChild(el);
+        } else {
+            leftPane.appendChild(el);
+        }
     });
-    if (localStorage.getItem('anomalyPanelHorizontal') === 'true') panel.classList.add('horizontal');
 
-    function updateDarkMode() {
-        const enabled = localStorage.getItem('anomalyPanelDarkMode') === 'true';
-        document.body.classList.toggle('anomaly-darkmode', enabled);
+    // split thumbnails
+    const thumbs = imageSection.querySelectorAll('.thumbnail');
+
+    if (thumbs.length >= 2) {
+        thermalPane.appendChild(thumbs[0]);
+        rgbPane.appendChild(thumbs[1]);
     }
 
-    darkBtn.addEventListener('click', () => {
-        const enabled = localStorage.getItem('anomalyPanelDarkMode') === 'true';
-        localStorage.setItem('anomalyPanelDarkMode',(!enabled).toString());
-        updateDarkMode();
-    });
+    // build layout
+    horizontalWrapper.appendChild(leftPane);
+    horizontalWrapper.appendChild(thermalPane);
+    horizontalWrapper.appendChild(rgbPane);
 
-    updateDarkMode();
+    // add to form
+    form.appendChild(horizontalWrapper);
+    form.appendChild(bottomPane);
 
 
-    let dragging = false;
-    let offsetX = 0;
-    let offsetY = 0;
+    function clampPanelToViewport() {
+        const maxX = Math.max(0, window.innerWidth - panel.offsetWidth - 20);
+        const maxY = Math.max(0, window.innerHeight - panel.offsetHeight);
 
-    handle.addEventListener('mousedown', (e) => {
-        dragging = true;
+        const currentX = parseInt(panel.style.left, 10) || 0;
+        const currentY = parseInt(panel.style.top, 10) || 0;
 
-        handle.classList.add('dragging');
-        panel.classList.add('dragging');
-
-        offsetX = e.clientX - panel.offsetLeft;
-        offsetY = e.clientY - panel.offsetTop;
-    });
-
-    document.addEventListener('mousemove', (e) => {
-        if (!dragging) return;
-
-        let x = e.clientX - offsetX;
-        let y = e.clientY - offsetY;
-
-        const maxX = window.innerWidth - panel.offsetWidth;
-        const maxY = window.innerHeight - panel.offsetHeight;
-
-        x = Math.max(0, Math.min(x, maxX - 20));
-        y = Math.max(0, Math.min(y, maxY - 70));
-
-        panel.style.left = `${x}px`;
-        panel.style.top = `${y}px`;
-    });
-
-    document.addEventListener('mouseup', () => {
-        if (!dragging) return;
-
-        dragging = false;
-        handle.classList.remove('dragging');
-        panel.classList.remove('dragging');
-
+        panel.style.left = `${Math.min(currentX, maxX)}px`;
+        panel.style.top = `${Math.min(currentY, maxY)}px`;
 
         localStorage.setItem('anomalyPanelX', panel.style.left);
         localStorage.setItem('anomalyPanelY', panel.style.top);
-    });
+    }
+
+    window.addEventListener('resize', clampPanelToViewport);
+
+    if (panel) {
+        panel.style.left = localStorage.getItem('anomalyPanelX') || '0px';
+        panel.style.top = localStorage.getItem('anomalyPanelY') || '0px';
+
+        const handle = panel.querySelector('h3.mode');
+
+        const toggleBtn = document.createElement('button');
+        toggleBtn.innerHTML = '⇆';
+        toggleBtn.title = 'Toggle Layout';
+        toggleBtn.className = 'layout-toggle';
+        handle.parentNode.insertBefore(toggleBtn, handle);
+
+        const darkBtn = document.createElement('button');
+        darkBtn.innerHTML = 'D';
+        darkBtn.title = 'Toggle Dark Mode';
+        darkBtn.className = 'layout-toggle';
+        handle.parentNode.insertBefore(darkBtn, handle);
+
+        const dragBar = document.createElement('div');
+        dragBar.className = 'drag-bar';
+        handle.parentNode.insertBefore(dragBar, handle);
+        dragBar.appendChild(toggleBtn);
+        dragBar.appendChild(darkBtn);
+        dragBar.appendChild(handle);
+
+        toggleBtn.addEventListener('click', () => {
+            if (localStorage.getItem('anomalyPanelImagesHidden') === 'true') return;
+            panel.classList.toggle('horizontal');
+            localStorage.setItem(
+                'anomalyPanelHorizontal',
+                panel.classList.contains('horizontal')
+            );
+            requestAnimationFrame(clampPanelToViewport);
+        });
+        if (localStorage.getItem('anomalyPanelHorizontal') === 'true') panel.classList.add('horizontal');
+
+        function updateDarkMode() {
+            const enabled = localStorage.getItem('anomalyPanelDarkMode') === 'true';
+            document.body.classList.toggle('anomaly-darkmode', enabled);
+        }
+
+        darkBtn.addEventListener('click', () => {
+            const enabled = localStorage.getItem('anomalyPanelDarkMode') === 'true';
+            localStorage.setItem('anomalyPanelDarkMode',(!enabled).toString());
+            updateDarkMode();
+        });
+
+        updateDarkMode();
+
+
+        let dragging = false;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        handle.addEventListener('mousedown', (e) => {
+            dragging = true;
+
+            handle.classList.add('dragging');
+            panel.classList.add('dragging');
+
+            offsetX = e.clientX - panel.offsetLeft;
+            offsetY = e.clientY - panel.offsetTop;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!dragging) return;
+
+            let x = e.clientX - offsetX;
+            let y = e.clientY - offsetY;
+
+            const maxX = window.innerWidth - panel.offsetWidth;
+            const maxY = window.innerHeight - panel.offsetHeight;
+
+            x = Math.max(0, Math.min(x, maxX - 20));
+            y = Math.max(0, Math.min(y, maxY - 70));
+
+            panel.style.left = `${x}px`;
+            panel.style.top = `${y}px`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!dragging) return;
+
+            dragging = false;
+            handle.classList.remove('dragging');
+            panel.classList.remove('dragging');
+
+
+            localStorage.setItem('anomalyPanelX', panel.style.left);
+            localStorage.setItem('anomalyPanelY', panel.style.top);
+        });
+    }
 }
+js_p2();
