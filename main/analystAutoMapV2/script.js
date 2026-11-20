@@ -1,5 +1,4 @@
-const VERSION = "2.1.0";
-
+const VERSION = "2.1.1";
 
 function keybinds(){
     // Keybind setting
@@ -259,7 +258,7 @@ function ui(){
 }
 ui();
 
-// SpeedUp: no closePath + batch same-style polygons into one fill 
+// SpeedUp: no closePath + batch same-style polygons into one fill
 function speedup(){
     const W = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window;
     function apply(){
@@ -498,7 +497,7 @@ rotateMap();
 function infoPopup(){
     // ---- settings ----
     const HINT_MS = 2000; // how long the "Alt + I" hint stays on screen after load
-    const HINT_DELAY = 3000; // wait a moment so it doesn't fight with the page loading
+    const HINT_DELAY = 1000; // wait a moment so it doesn't fight with the page loading
     // ------------------
 
     const SECTIONS = [

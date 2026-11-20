@@ -497,7 +497,7 @@ rotateMap();
 function infoPopup(){
     // ---- settings ----
     const HINT_MS = 2000; // how long the "Alt + I" hint stays on screen after load
-    const HINT_DELAY = 3000; // wait a moment so it doesn't fight with the page loading
+    const HINT_DELAY = 1000; // wait a moment so it doesn't fight with the page loading
     // ------------------
 
     const SECTIONS = [
