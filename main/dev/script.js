@@ -1,4 +1,5 @@
-const VERSION = "1.0.0";
+const VERSION = "2.0.1";
+
 
 function keybinds(){
     // Keybind setting
@@ -259,7 +260,7 @@ function ui(){
 ui();
 
 function speedup(){
-    const W = unsafeWindow;
+    const W = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window;
     function apply(){
         const L = W.L;
         if (!L || !L.Canvas) return false;
@@ -297,10 +298,6 @@ function speedup(){
             }
         };
 
-        P._updateCircle = function (layer) {
-            this._akFlush(); // keep draw order around markers/circles
-            return origCircle.call(this, layer);
-        };
 
         P._draw = function () {
             const bounds = this._redrawBounds;
@@ -323,8 +320,6 @@ function speedup(){
             this._drawing = false;
             this._ctx.restore();
         };
-
-        console.log('[ak] canvas batch patch applied');
         return true;
     }
     if (!apply()) {
@@ -343,7 +338,7 @@ function rotateMap(){
     const TOAST_MS = 900; // how long the angle toast stays visible
     // ------------------
 
-    const W = unsafeWindow;
+    const W = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window;
     const KEY = 'akMapAngle:' + location.pathname + location.search;
     const saved = REMEMBER_ANGLE ? parseFloat(localStorage.getItem(KEY)) : NaN;
     let angle = Number.isFinite(saved) ? saved : DEFAULT_DEG;
@@ -470,7 +465,7 @@ function rotateMap(){
         if (!immediate) showToast();
     }
 
-        // Alt+wheel rotates by STEP_DEG, Alt+Shift+wheel by BIG_STEP_DEG; everything else passes through
+    // Alt+wheel rotates by STEP_DEG, Alt+Shift+wheel by BIG_STEP_DEG; everything else passes through
     let altUsedForRotate = false;
     document.addEventListener('wheel', e => {
         if (!rotor || !e.altKey || e.ctrlKey || e.metaKey) return;
@@ -553,7 +548,7 @@ function infoPopup(){
     #ak-info td{padding:2px 6px;vertical-align:top;}
     #ak-info td:first-child{white-space:nowrap;width:1%;}
     #ak-info kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border:1px solid #bbb;border-bottom-width:2px;
-    border-radius:3px;background:#f6f6f6;font:600 11px/1.4 Arial,sans-serif;color:#333;}
+       border-radius:3px;background:#f6f6f6;font:600 11px/1.4 Arial,sans-serif;color:#333;}
         `;
         document.head.appendChild(style);
         box.addEventListener('mousedown', e => { if (e.target === box || e.target.classList.contains('ak-info-x')) hide(); });
