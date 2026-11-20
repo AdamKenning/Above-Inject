@@ -1,4 +1,4 @@
-const VERSION = "2.0.1";
+const VERSION = "2.1.0";
 
 
 function keybinds(){
@@ -259,6 +259,7 @@ function ui(){
 }
 ui();
 
+// SpeedUp: no closePath + batch same-style polygons into one fill 
 function speedup(){
     const W = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window;
     function apply(){
@@ -329,6 +330,7 @@ function speedup(){
 }
 speedup();
 
+// Rotate map: Shift+wheel (Shift+Alt+wheel = fine), Shift+R = reset
 function rotateMap(){
     // ---- settings ----
     const STEP_DEG = 1; // degrees per Alt+wheel notch
@@ -492,7 +494,13 @@ function rotateMap(){
 }
 rotateMap();
 
+// Info popup: Alt+I toggles a quick overview of the injected features
 function infoPopup(){
+    // ---- settings ----
+    const HINT_MS = 2000; // how long the "Alt + I" hint stays on screen after load
+    const HINT_DELAY = 3000; // wait a moment so it doesn't fight with the page loading
+    // ------------------
+
     const SECTIONS = [
         ['Keybinds (when not typing in a field)', [
             ['S', 'Save'],
@@ -506,21 +514,41 @@ function infoPopup(){
         ['Map', [
             ['Alt + wheel', 'Rotate map 1°'],
             ['Alt + Shift + wheel', 'Rotate map 10°'],
-            ['', 'Angle shows mid-screen, turns green at 0°, and is remembered per page'],
-            ['', 'Faster map redraw when panning/zooming'],
+            ['Edge arrow', 'Click to jump back to the zone when it is off screen'],
         ]],
         ['Anomaly panel', [
-            ['Drag title bar', 'Move the panel (position is remembered)'],
+            ['Drag title bar', 'Move the panel'],
             ['⇆ button', 'Toggle wide / narrow layout'],
             ['D button', 'Toggle dark mode'],
-            ['Hover a button', 'Shows its keybind'],
         ]],
         ['', [
             ['Alt + I', 'Show / hide this help'],
         ]],
     ];
 
-    let box = null;
+    let box = null, hint = null;
+
+    const style = document.createElement('style');
+    style.textContent = `
+    #ak-info{position:fixed;inset:0;z-index:1000001;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35);}
+    #ak-info .ak-info-card{background:#fff;color:#222;border-radius:6px;box-shadow:0 4px 24px rgba(0,0,0,.35);
+        padding:12px 16px 14px;max-width:min(520px,92vw);max-height:85vh;overflow:auto;font:13px/1.45 Arial,sans-serif;}
+    #ak-info .ak-info-head{font-weight:700;font-size:15px;color:#fff;background:#3498db;margin:-12px -16px 8px;padding:8px 16px;
+        border-radius:6px 6px 0 0;display:flex;justify-content:space-between;align-items:center;}
+    #ak-info .ak-info-x{cursor:pointer;padding:0 4px;}
+    #ak-info .ak-info-sec{font-weight:700;margin:10px 0 4px;color:#1f6fb2;}
+    #ak-info .ak-info-gap{height:8px;}
+    #ak-info table{border-collapse:collapse;width:100%;}
+    #ak-info td{padding:2px 6px;vertical-align:top;}
+    #ak-info td:first-child{white-space:nowrap;width:1%;}
+    #ak-info kbd, #ak-info-hint kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border:1px solid #bbb;border-bottom-width:2px;
+       border-radius:3px;background:#f6f6f6;font:600 11px/1.4 Arial,sans-serif;color:#333;}
+    #ak-info-hint{position:fixed;top:12px;left:50%;transform:translate(-50%,-8px);z-index:1000001;pointer-events:none;
+        padding:5px 12px;border-radius:14px;background:rgba(0,0,0,.65);color:#fff;font:12px/1.4 Arial,sans-serif;
+        opacity:0;transition:opacity .3s ease, transform .3s ease;}
+    #ak-info-hint.show{opacity:1;transform:translate(-50%,0);}
+    `;
+    document.head.appendChild(style);
 
     function build(){
         box = document.createElement('div');
@@ -534,30 +562,30 @@ function infoPopup(){
                         <tr><td>${k ? k.split(' + ').map(x => `<kbd>${x}</kbd>`).join(' + ') : ''}</td><td>${v}</td></tr>`).join('')}
                     </table>`).join('')}
             </div>`;
-        const style = document.createElement('style');
-        style.textContent = `
-    #ak-info{position:fixed;inset:0;z-index:1000001;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35);}
-    #ak-info .ak-info-card{background:#fff;color:#222;border-radius:6px;box-shadow:0 4px 24px rgba(0,0,0,.35);
-        padding:12px 16px 14px;max-width:min(520px,92vw);max-height:85vh;overflow:auto;font:13px/1.45 Arial,sans-serif;}
-    #ak-info .ak-info-head{font-weight:700;font-size:15px;color:#fff;background:#3498db;margin:-12px -16px 8px;padding:8px 16px;
-        border-radius:6px 6px 0 0;display:flex;justify-content:space-between;align-items:center;}
-    #ak-info .ak-info-x{cursor:pointer;padding:0 4px;}
-    #ak-info .ak-info-sec{font-weight:700;margin:10px 0 4px;color:#1f6fb2;}
-    #ak-info .ak-info-gap{height:8px;}
-    #ak-info table{border-collapse:collapse;width:100%;}
-    #ak-info td{padding:2px 6px;vertical-align:top;}
-    #ak-info td:first-child{white-space:nowrap;width:1%;}
-    #ak-info kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border:1px solid #bbb;border-bottom-width:2px;
-       border-radius:3px;background:#f6f6f6;font:600 11px/1.4 Arial,sans-serif;color:#333;}
-        `;
-        document.head.appendChild(style);
         box.addEventListener('mousedown', e => { if (e.target === box || e.target.classList.contains('ak-info-x')) hide(); });
         document.body.appendChild(box);
     }
 
-    function show(){ if (!box) build(); box.style.display = 'flex'; }
+    function show(){ hideHint(); if (!box) build(); box.style.display = 'flex'; }
     function hide(){ if (box) box.style.display = 'none'; }
     const isOpen = () => box && box.style.display !== 'none';
+
+    // small "Alt + I" reminder after load
+    function showHint(){
+        hint = document.createElement('div');
+        hint.id = 'ak-info-hint';
+        hint.innerHTML = 'Press <kbd>Alt</kbd> + <kbd>I</kbd> for Above.D.Inject info';
+        document.body.appendChild(hint);
+        requestAnimationFrame(() => hint.classList.add('show'));
+        setTimeout(hideHint, HINT_MS);
+    }
+    function hideHint(){
+        if (!hint) return;
+        const h = hint; hint = null;
+        h.classList.remove('show');
+        setTimeout(() => h.remove(), 400);
+    }
+    setTimeout(showHint, HINT_DELAY);
 
     document.addEventListener('keydown', e => {
         if (e.altKey && !e.ctrlKey && !e.metaKey && e.code === 'KeyI') {
@@ -569,3 +597,135 @@ function infoPopup(){
     }, true);
 }
 infoPopup();
+
+// Remember map view across reloads + arrow pointing back to the zone when it's off screen
+function rememberView(){
+    // ---- settings ----
+    const MAX_AGE_MIN = 60; // ignore saved views older than this
+    const SAME_ZONE_ONLY = true; // only restore if the reloaded page opens the same zone
+    const MARGIN_VH = 1; // zone counts as "lost" if no part is visible inside this margin (in vh)
+    const ARROW_INSET_PX = 28; // how far from the map edge the arrow sits
+    // ------------------
+
+    const W = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window;
+    const KEY = 'akMapView:' + location.pathname + location.search;
+    const zoneNow = () => (document.getElementById('zoneId')?.textContent || '').trim();
+
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(KEY)); } catch (_) {}
+    let pending = saved && (Date.now() - saved.t) < MAX_AGE_MIN * 60000 ? saved : null;
+
+    let map = null, saveTimer = null, zoneBounds = null, arrow = null, rafQueued = false;
+
+    // ---------- save / restore ----------
+    function save(){
+        if (!map || !map._loaded) return;
+        const c = map.getCenter();
+        localStorage.setItem(KEY, JSON.stringify({ lat: c.lat, lng: c.lng, zoom: map.getZoom(), zone: zoneNow(), t: Date.now() }));
+    }
+
+    function hookMap(m){
+        if (map) return;
+        map = m;
+        map.on('moveend zoomend', () => {
+            queueArrow();
+            if (pending) return; // don't overwrite the saved view before it's been restored
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(save, 300);
+        });
+        map.on('move zoom resize', queueArrow);
+        W.addEventListener('pagehide', () => { if (!pending) save(); });
+    }
+
+    function currentAngle(){
+        const r = document.querySelector('.ak-rotor');
+        const m = r && /rotate\((-?[\d.]+)deg\)/.exec(r.style.transform || '');
+        return m ? parseFloat(m[1]) * Math.PI / 180 : 0;
+    }
+
+    function buildArrow(){
+        arrow = document.createElement('div');
+        arrow.title = 'Zone is off screen: click to zoom back to it';
+        arrow.style.cssText = `
+            position:absolute; z-index:1000; width:34px; height:34px; margin:-17px 0 0 -17px;
+            display:none; cursor:pointer; pointer-events:auto;
+            border-radius:50%; background:rgba(52,152,219,.9); box-shadow:0 2px 8px rgba(0,0,0,.4);
+            color:#fff; font:700 20px/34px Arial,sans-serif; text-align:center; user-select:none;
+        `;
+        arrow.textContent = '➜';
+        arrow.addEventListener('mousedown', e => e.stopPropagation());
+        arrow.addEventListener('click', e => {
+            e.stopPropagation();
+            if (map && zoneBounds) map.fitBounds(zoneBounds);
+        });
+        map.getContainer().appendChild(arrow);
+    }
+
+    function queueArrow(){
+        if (rafQueued) return;
+        rafQueued = true;
+        requestAnimationFrame(() => { rafQueued = false; updateArrow(); });
+    }
+
+    function updateArrow(){
+        if (!map || !zoneBounds || !map._loaded) { if (arrow) arrow.style.display = 'none'; return; }
+        if (!arrow) buildArrow();
+
+        const size = map.getSize(), cx = size.x / 2, cy = size.y / 2;
+        const a = currentAngle(), cos = Math.cos(a), sin = Math.sin(a);
+        // container point -> on-screen point (applies the map rotation around the centre)
+        const toScreen = p => ({ x: cx + (p.x - cx) * cos - (p.y - cy) * sin, y: cy + (p.x - cx) * sin + (p.y - cy) * cos });
+
+        const corners = [zoneBounds.getNorthWest(), zoneBounds.getNorthEast(), zoneBounds.getSouthEast(), zoneBounds.getSouthWest()]
+            .map(ll => toScreen(map.latLngToContainerPoint(ll)));
+        const minX = Math.min(...corners.map(p => p.x)), maxX = Math.max(...corners.map(p => p.x));
+        const minY = Math.min(...corners.map(p => p.y)), maxY = Math.max(...corners.map(p => p.y));
+
+        const m = window.innerHeight * MARGIN_VH / 100;
+        const visible = maxX > m && minX < size.x - m && maxY > m && minY < size.y - m;
+        if (visible) { arrow.style.display = 'none'; return; }
+
+        // direction from map centre to zone centre, clamped to an inset rectangle at the map edge
+        const tx = (minX + maxX) / 2 - cx, ty = (minY + maxY) / 2 - cy;
+        const hx = cx - ARROW_INSET_PX, hy = cy - ARROW_INSET_PX;
+        const k = Math.min(hx / Math.abs(tx || 1e-9), hy / Math.abs(ty || 1e-9));
+        arrow.style.left = (cx + tx * k) + 'px';
+        arrow.style.top = (cy + ty * k) + 'px';
+        arrow.style.transform = `rotate(${Math.atan2(ty, tx)}rad)`;
+        arrow.style.display = 'block';
+    }
+
+    function apply(){
+        const L = W.L;
+        if (!L || !L.Map) return false;
+        const P = L.Map.prototype;
+        if (P._akRememberView) return true;
+        P._akRememberView = true;
+
+        const origGetSize = P.getSize;
+        P.getSize = function(){ hookMap(this); return origGetSize.call(this); };
+
+        // the page calls fitBounds(zone bounds) when a zone loads: remember those bounds,
+        // and on the first load after a reload use the saved view instead
+        const origFit = P.fitBounds;
+        P.fitBounds = function(bounds, options){
+            hookMap(this);
+            try { zoneBounds = L.latLngBounds(bounds); } catch (_) {}
+            queueArrow();
+            if (pending && (!SAME_ZONE_ONLY || !pending.zone || pending.zone === zoneNow())) {
+                const v = pending;
+                pending = null;
+                return this.setView([v.lat, v.lng], v.zoom, { animate: false });
+            }
+            pending = null;
+            return origFit.call(this, bounds, options);
+        };
+        return true;
+    }
+
+    if (!apply()) {
+        const t = setInterval(() => { if (apply()) clearInterval(t); }, 100);
+        setTimeout(() => clearInterval(t), 30000);
+    }
+}
+rememberView();
