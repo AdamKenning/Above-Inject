@@ -219,18 +219,25 @@ body, body * {
 }
 
 
-body.anomaly-darkmode
-#map-init > div.leaflet-pane.leaflet-map-pane > div.leaflet-pane.leaflet-sgTable-pane > canvas{
+
+body.anomaly-darkmode #map-init .leaflet-map-pane > div.leaflet-pane.leaflet-sgTable-pane > canvas{
     filter: brightness(8);
 }
 
-body.anomaly-darkmode
-#map-init > div.leaflet-pane.leaflet-map-pane > div.leaflet-pane.leaflet-sgTableline-pane > canvas{
+body.anomaly-darkmode #map-init .leaflet-map-pane > div.leaflet-pane.leaflet-sgTableline-pane > canvas{
     filter: brightness(8);
 }
 
-body.anomaly-darkmode #map-init > div.leaflet-pane.leaflet-map-pane > div.leaflet-pane.leaflet-sgRegister-pane > canvas{
+body.anomaly-darkmode #map-init .leaflet-map-pane > div.leaflet-pane.leaflet-sgRegister-pane > canvas{
     filter: invert(1) opacity(0.7);
+}
+
+body.anomaly-darkmode #map-init .leaflet-map-pane > div.leaflet-pane.leaflet-tile-pane > div:nth-child(1){
+    filter: invert(1);
+}
+
+body.anomaly-darkmode #map-init .leaflet-map-pane > div.leaflet-pane.leaflet-overlay-pane{
+    filter: invert(1) opacity(0.2) saturate(3);
 }
 
 body.anomaly-darkmode
@@ -272,13 +279,7 @@ body.anomaly-darkmode #ak-menu > div:nth-child(2) > div:nth-child(2) > button
 
 
 
-body.anomaly-darkmode #map-init > div.leaflet-pane.leaflet-map-pane > div.leaflet-pane.leaflet-tile-pane > div:nth-child(1){
-    filter: invert(1);
-}
 
-body.anomaly-darkmode #map-init > div.leaflet-pane.leaflet-map-pane > div.leaflet-pane.leaflet-overlay-pane{
-    filter: invert(1) opacity(0.2) saturate(3);
-}
 
 /* Coloured Buttons */
 body.anomaly-darkmode #Delete,
@@ -315,3 +316,6 @@ body.anomaly-darkmode path[fill-opacity="0.8"]{fill-opacity: 1;}
 /* Selected Mods (Yellow Outline)*/
 body.anomaly-darkmode path[stroke="#ffeb3b"]{fill-opacity: 0.8;}
 body.anomaly-darkmode path[fill="#ffeb3b"]{fill-opacity: 0.4;}
+
+/* Missing Module Exception (Because they Invisible) */
+body.anomaly-darkmode path[fill="#1F2937"]{filter: invert(1) brightness(1.5);}
