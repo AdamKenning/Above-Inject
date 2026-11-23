@@ -1,4 +1,4 @@
-const VERSION = "2.1.0";
+const VERSION = "3.0.0";
 
 function keybinds(){
     // Keybind setting
@@ -258,70 +258,224 @@ function ui(){
 }
 ui();
 
-// SpeedUp: no closePath + batch same-style polygons into one fill
+// SpeedUp: time-sliced, visible-first redraw + merged module blocks + pan cache
 function speedup(){
+    // ---- settings ----
+    const BUDGET_MS = 0.05; // drawing time per frame
+    const VIEW_PAD = 0.25; // extra margin treated as on-screen (covers rotation)
+    const SPLIT_RINGS = 200; // big layers get split into on-screen / off-screen rings
+    const MERGE_PANES = ['sgRegisterPane']; // module quads merged into blocks, drawn fill-only ([] = off)
+    const CACHE_PANES = ['sgRegisterPane', 'sgTablePane', 'sgTablelinePane']; // on pan: reuse old pixels, draw only the new strip ([] = off)
+    const FAILSAFE_MS = 1000; // if one draw's setup takes longer than this (or throws), fall back to Leaflet until reload
+
     const W = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window;
+    const mergePanes = new Set(MERGE_PANES), cachePanes = new Set(CACHE_PANES);
+
+    // ---- merge grid quads [a,b,c,d] sharing exact edges: rows -> strips -> blocks ----
+    const k = p => p.x + ',' + p.y;
+    const same = (p, q) => p.x === q.x && p.y === q.y;
+    const degenerate = q => same(q[0], q[1]) || same(q[0], q[3]) || same(q[1], q[2]) || same(q[2], q[3]);
+
+    function chain(items, startKey, nextKey, join){
+        const byStart = new Map();
+        for (const it of items) { const s = startKey(it); if (!byStart.has(s)) byStart.set(s, it); }
+        const hasPrev = new Set();
+        for (const it of items) { const n = byStart.get(nextKey(it)); if (n && n !== it) hasPrev.add(n); }
+        const used = new Set(), out = [];
+        const run = first => {
+            let last = first, next;
+            used.add(first);
+            while ((next = byStart.get(nextKey(last))) && !used.has(next)) { used.add(next); last = next; }
+            out.push(join(first, last));
+        };
+        for (const it of items) if (!hasPrev.has(it) && !used.has(it)) run(it);
+        for (const it of items) if (!used.has(it)) run(it);
+        return out;
+    }
+    function mergeQuads(quads){
+        const strips = chain(quads, q => k(q[0]) + '|' + k(q[3]), q => k(q[1]) + '|' + k(q[2]), (f, l) => [f[0], l[1], l[2], f[3]]);
+        return chain(strips, s => k(s[0]) + '|' + k(s[1]), s => k(s[3]) + '|' + k(s[2]), (f, l) => [f[0], f[1], l[2], l[3]]);
+    }
+    function mergedRings(L, layer){
+        const src = layer._rings;
+        if (layer._akMerge && layer._akMerge.src === src) return layer._akMerge.rings;
+        const quads = [], other = [];
+        for (const r of src) (r.length === 4 && !degenerate(r) ? quads : other).push(r);
+        const rings = mergeQuads(quads).concat(other).map(r => { r._akB = L.bounds(r); return r; });
+        layer._akMerge = { src, rings };
+        return rings;
+    }
+    // ring fully inside bounds b?
+    const inside = (r, b) => { for (const p of r) if (p.x < b.min.x || p.y < b.min.y || p.x > b.max.x || p.y > b.max.y) return false; return true; };
+
     function apply(){
         const L = W.L;
         if (!L || !L.Canvas) return false;
         const P = L.Canvas.prototype;
-        if (P._akBatched) return true;
-        P._akBatched = true;
+        if (P._akChunked) return true;
+        P._akChunked = true;
 
-        const origCircle = P._updateCircle;
+        const origDraw = P._draw, origUpdate = P._update;
+        let disabled = false;
 
-        P._akFlush = function(){
-            const b = this._akBatch;
-            if (!b) return;
-            this._akBatch = null;
-            this._fillStroke(this._ctx, b.layer); // one fill/stroke for the whole batch
-        };
+        const keyOf = (l, closed) => { const o = l.options;
+            return `${closed}|${o.stroke}|${o.color}|${o.weight}|${o.opacity}|${o.dashArray}|${o.fill}|${o.fillColor}|${o.fillOpacity}|${o.fillRule}`; };
 
-        P._updatePoly = function (layer, closed) {
-            if (!this._drawing) return;
-            const parts = layer._parts, ctx = this._ctx;
-            if (!parts.length) return;
+        function fillOnly(renderer, ctx, layer){
             const o = layer.options;
-            const key = [closed, o.stroke, o.color, o.weight, o.opacity, o.lineCap, o.lineJoin,
-                         o.dashArray, o.fill, o.fillColor, o.fillOpacity, o.fillRule].join('|');
-            if (!this._akBatch || this._akBatch.key !== key) {
-                this._akFlush();
-                ctx.beginPath();
-                this._akBatch = { key, layer };
+            if (o.stroke && mergePanes.has(o.pane)) { o.stroke = false; renderer._fillStroke(ctx, layer); o.stroke = true; }
+            else renderer._fillStroke(ctx, layer);
+        }
+
+        function disable(renderer, reason){
+            disabled = true;
+            P._draw = origDraw; P._update = origUpdate;
+            if (renderer._akJob) renderer._akJob.cancelled = true;
+            console.warn('[ak] speedup disabled until reload:', reason);
+        }
+
+        // pan cache: snapshot the finished canvas just before Leaflet resizes (= wipes) it
+        P._update = function(){
+            const c = this._container, map = this._map;
+            const ok = !disabled && cachePanes.has(this.options.pane) && map && !map._animatingZoom
+                && this._bounds && this._akDone && !this._akJob && c.width && c.height
+                && this._akOrigin && this._akOrigin.equals(map.getPixelOrigin());
+            if (ok) {
+                const s = this._akSnap || (this._akSnap = document.createElement('canvas'));
+                s.width = c.width; s.height = c.height;
+                s.getContext('2d').drawImage(c, 0, 0);
+                this._akSnapB = this._bounds;
             }
-            for (let i = 0; i < parts.length; i++) {
-                const ring = parts[i];
-                if (!ring.length) continue;
-                ctx.moveTo(ring[0].x, ring[0].y);
-                for (let j = 1; j < ring.length; j++) ctx.lineTo(ring[j].x, ring[j].y);
-                if (closed) ctx.lineTo(ring[0].x, ring[0].y);
+            this._akUseSnap = ok;
+            return origUpdate.apply(this, arguments);
+        };
+
+        P._draw = function(){
+            if (disabled) return origDraw.call(this);
+            const t0 = performance.now();
+            try { return chunkedDraw.call(this, L); }
+            catch (err) { disable(this, err); return origDraw.call(this); }
+            finally {
+                const took = performance.now() - t0;
+                if (!disabled && took > FAILSAFE_MS) disable(this, `draw setup took ${Math.round(took)} ms`);
             }
         };
 
+        function chunkedDraw(L){
+            const ctx = this._ctx, map = this._map;
+            if (this._akJob) this._akJob.cancelled = true;
+            this._akDone = false;
+            this._akOrigin = map.getPixelOrigin();
 
-        P._draw = function () {
-            const bounds = this._redrawBounds;
-            this._ctx.save();
-            if (bounds) {
-                const size = bounds.getSize();
-                this._ctx.beginPath();
-                this._ctx.rect(bounds.min.x, bounds.min.y, size.x, size.y);
-                this._ctx.clip();
+            if (this._redrawBounds) {
+                ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.clearRect(0, 0, this._container.width, this._container.height);
+                ctx.restore();
             }
-            this._drawing = true;
-            this._akBatch = null;
-            for (let order = this._drawFirst; order; order = order.next) {
-                const layer = order.layer;
-                if (!bounds || (layer._pxBounds && layer._pxBounds.intersects(bounds))) {
-                    layer._updatePath();
+
+            let keep = null;
+            if (this._akUseSnap) {
+                this._akUseSnap = false;
+                const ob = this._akSnapB, sz = ob.getSize();
+                if (ob.intersects(this._bounds)) {
+                    ctx.drawImage(this._akSnap, ob.min.x, ob.min.y, sz.x, sz.y);
+                    keep = ob;
                 }
             }
-            this._akFlush();
-            this._drawing = false;
-            this._ctx.restore();
-        };
+
+            const tl = map.containerPointToLayerPoint([0, 0]);
+            const br = map.containerPointToLayerPoint(map.getSize());
+            const pad = br.subtract(tl).multiplyBy(VIEW_PAD);
+            const vp = L.bounds(tl.subtract(pad), br.add(pad));
+            const draw = this._bounds;
+
+            const now = [], later = [];
+            for (let o = this._drawFirst; o; o = o.next) {
+                const l = o.layer;
+                if (mergePanes.has(l.options.pane) && l._rings && l._rings.length) {
+                    const a = [], b = [];
+                    for (const r of mergedRings(L, l)) {
+                        if (!r._akB.intersects(draw)) continue;
+                        if (keep && keep.contains(r._akB)) continue;
+                        (r._akB.intersects(vp) ? a : b).push(r);
+                    }
+                    if (a.length) now.push({ l, rings: a });
+                    if (b.length) later.push({ l, rings: b });
+                    continue;
+                }
+                let parts = l._parts;
+                if (!parts || !parts.length) continue;
+                if (keep) {
+                    if (l._pxBounds && keep.contains(l._pxBounds)) continue;
+                    parts = parts.filter(r => r.length && !inside(r, keep));
+                    if (!parts.length) continue;
+                }
+                if (parts.length > SPLIT_RINGS) {
+                    const a = [], b = [];
+                    for (const r of parts) if (r.length) (vp.contains(r[0]) ? a : b).push(r);
+                    if (a.length) now.push({ l, rings: a });
+                    if (b.length) later.push({ l, rings: b });
+                } else {
+                    ((l._pxBounds && l._pxBounds.intersects(vp)) ? now : later).push({ l, rings: parts });
+                }
+            }
+            const work = now.concat(later);
+
+            const job = { cancelled: false };
+            this._akJob = job;
+            let wi = 0, ri = 0;
+
+            // draws until budget runs out; returns true when finished
+            const run = () => {
+                const t0 = performance.now();
+                let curKey = null, curLayer = null;
+                while (wi < work.length) {
+                    const { l, rings } = work[wi];
+                    const closed = l instanceof L.Polygon;
+                    const key = keyOf(l, closed);
+                    if (key !== curKey) {
+                        if (curLayer) fillOnly(this, ctx, curLayer);
+                        ctx.beginPath(); curKey = key; curLayer = l;
+                    }
+                    for (; ri < rings.length; ri++) {
+                        const ring = rings[ri];
+                        ctx.moveTo(ring[0].x, ring[0].y);
+                        for (let j = 1; j < ring.length; j++) ctx.lineTo(ring[j].x, ring[j].y);
+                        if (closed) ctx.lineTo(ring[0].x, ring[0].y);
+                        if ((ri & 63) === 63 && performance.now() - t0 > BUDGET_MS) {
+                            ri++; fillOnly(this, ctx, curLayer); return false;
+                        }
+                    }
+                    wi++; ri = 0;
+                    if (performance.now() - t0 > BUDGET_MS && wi < work.length) {
+                        fillOnly(this, ctx, curLayer); return false;
+                    }
+                }
+                if (curLayer) fillOnly(this, ctx, curLayer);
+                return true;
+            };
+
+            const step = () => {
+                if (job.cancelled || !this._map || disabled) return;
+                ctx.save();
+                if (keep) { // only paint outside the pasted area (no double-blended fills)
+                    ctx.beginPath();
+                    ctx.rect(draw.min.x, draw.min.y, draw.max.x - draw.min.x, draw.max.y - draw.min.y);
+                    ctx.rect(keep.min.x, keep.min.y, keep.max.x - keep.min.x, keep.max.y - keep.min.y);
+                    ctx.clip('evenodd');
+                }
+                let finished = false;
+                try { finished = run(); }
+                catch (err) { ctx.restore(); disable(this, err); this._redraw(); return; }
+                ctx.restore();
+                if (finished) { if (this._akJob === job) { this._akJob = null; this._akDone = true; } }
+                else W.requestAnimationFrame(step);
+            };
+            step();
+        }
         return true;
     }
+
     if (!apply()) {
         const t = setInterval(() => { if (apply()) clearInterval(t); }, 100);
         setTimeout(() => clearInterval(t), 30000);
@@ -443,11 +597,14 @@ function rotateMap(){
         return true;
     }
 
-    // canvas/SVG renderers: enlarge their drawn area while rotated
+    // canvas/SVG renderers: enlarge their drawn area while rotated (only redraw if padding changed)
+    let lastPad = null;
     function updateRenderers(){
         if (!map) return;
         const s = map.getSize(), d = Math.hypot(s.x, s.y);
         const pad = angle ? Math.max(0.1, (d / Math.min(s.x, s.y) - 1) / 2) : 0.1;
+        if (pad === lastPad) return; // same padding: the rotated pixels are still valid, nothing to redraw
+        lastPad = pad;
         Object.values(map._layers).forEach(l => {
             if (l instanceof W.L.Renderer) l.options.padding = pad;
         });
@@ -600,25 +757,48 @@ infoPopup();
 // Remember map view across reloads + arrow pointing back to the zone when it's off screen
 function rememberView(){
     // ---- settings ----
-    const MAX_AGE_MIN = 60; // ignore saved views older than this
+    const MAX_AGE_MIN = 60;      // ignore saved views older than this
     const SAME_ZONE_ONLY = true; // only restore if the reloaded page opens the same zone
-    const MARGIN_VH = 1; // zone counts as "lost" if no part is visible inside this margin (in vh)
-    const ARROW_INSET_PX = 28; // how far from the map edge the arrow sits
+    const MIN_SAVE_ZOOM = 15;    // zoomed out further than this = view not saved (page allows 12)
+    const MAX_SAVE_ZOOM = 24;    // zoomed in further than this  = view not saved (page allows 26)
+    const MARGIN_VH = 1;         // zone counts as "lost" if no part is visible inside this margin (in vh)
+    const ARROW_INSET_PX = 28;   // how far from the map edge the arrow sits
+    const WARN_BORDER = '3px solid rgba(230,81,0,.85)'; // border shown while the view won't be saved
     // ------------------
 
     const W = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window;
     const KEY = 'akMapView:' + location.pathname + location.search;
     const zoneNow = () => (document.getElementById('zoneId')?.textContent || '').trim();
+    const zoomOk = z => z >= MIN_SAVE_ZOOM && z <= MAX_SAVE_ZOOM;
 
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem(KEY)); } catch (_) {}
-    let pending = saved && (Date.now() - saved.t) < MAX_AGE_MIN * 60000 ? saved : null;
+    let pending = saved && (Date.now() - saved.t) < MAX_AGE_MIN * 60000 && zoomOk(saved.zoom) ? saved : null;
 
     let map = null, saveTimer = null, zoneBounds = null, arrow = null, rafQueued = false;
+    let offscreen = false, warnBox = null;
+
+    // ---------- unsafe-view warning ----------
+    function isUnsafe(){
+        return !!map && map._loaded && (!zoomOk(map.getZoom()) || offscreen);
+    }
+
+    function updateWarning(){
+        if (pending) return;                  // nothing restored yet: leave the saved view alone
+        const unsafe = isUnsafe();
+        if (unsafe) localStorage.removeItem(KEY);
+        if (!warnBox) {
+            warnBox = document.createElement('div');
+            // shown while the current view won't be remembered: reloading now returns to the default view
+            warnBox.style.cssText = `position:fixed; inset:0; z-index:1000002; pointer-events:none; box-sizing:border-box; border:${WARN_BORDER}; display:none;`;
+            document.body.appendChild(warnBox);
+        }
+        warnBox.style.display = unsafe ? 'block' : 'none';
+    }
 
     // ---------- save / restore ----------
     function save(){
-        if (!map || !map._loaded) return;
+        if (!map || !map._loaded || isUnsafe()) return;
         const c = map.getCenter();
         localStorage.setItem(KEY, JSON.stringify({ lat: c.lat, lng: c.lng, zoom: map.getZoom(), zone: zoneNow(), t: Date.now() }));
     }
@@ -628,7 +808,7 @@ function rememberView(){
         map = m;
         map.on('moveend zoomend', () => {
             queueArrow();
-            if (pending) return; // don't overwrite the saved view before it's been restored
+            if (pending) return;               // don't overwrite the saved view before it's been restored
             clearTimeout(saveTimer);
             saveTimer = setTimeout(save, 300);
         });
@@ -636,6 +816,7 @@ function rememberView(){
         W.addEventListener('pagehide', () => { if (!pending) save(); });
     }
 
+    // ---------- off-screen arrow ----------
     function currentAngle(){
         const r = document.querySelector('.ak-rotor');
         const m = r && /rotate\((-?[\d.]+)deg\)/.exec(r.style.transform || '');
@@ -644,6 +825,7 @@ function rememberView(){
 
     function buildArrow(){
         arrow = document.createElement('div');
+        arrow.className = 'ak-zone-arrow';
         arrow.title = 'Zone is off screen: click to zoom back to it';
         arrow.style.cssText = `
             position:absolute; z-index:1000; width:34px; height:34px; margin:-17px 0 0 -17px;
@@ -663,16 +845,16 @@ function rememberView(){
     function queueArrow(){
         if (rafQueued) return;
         rafQueued = true;
-        requestAnimationFrame(() => { rafQueued = false; updateArrow(); });
+        requestAnimationFrame(() => { rafQueued = false; updateArrow(); updateWarning(); });
     }
 
     function updateArrow(){
+        offscreen = false;
         if (!map || !zoneBounds || !map._loaded) { if (arrow) arrow.style.display = 'none'; return; }
         if (!arrow) buildArrow();
 
         const size = map.getSize(), cx = size.x / 2, cy = size.y / 2;
         const a = currentAngle(), cos = Math.cos(a), sin = Math.sin(a);
-        // container point -> on-screen point (applies the map rotation around the centre)
         const toScreen = p => ({ x: cx + (p.x - cx) * cos - (p.y - cy) * sin, y: cy + (p.x - cx) * sin + (p.y - cy) * cos });
 
         const corners = [zoneBounds.getNorthWest(), zoneBounds.getNorthEast(), zoneBounds.getSouthEast(), zoneBounds.getSouthWest()]
@@ -683,8 +865,8 @@ function rememberView(){
         const m = window.innerHeight * MARGIN_VH / 100;
         const visible = maxX > m && minX < size.x - m && maxY > m && minY < size.y - m;
         if (visible) { arrow.style.display = 'none'; return; }
+        offscreen = true;
 
-        // direction from map centre to zone centre, clamped to an inset rectangle at the map edge
         const tx = (minX + maxX) / 2 - cx, ty = (minY + maxY) / 2 - cy;
         const hx = cx - ARROW_INSET_PX, hy = cy - ARROW_INSET_PX;
         const k = Math.min(hx / Math.abs(tx || 1e-9), hy / Math.abs(ty || 1e-9));
@@ -694,6 +876,7 @@ function rememberView(){
         arrow.style.display = 'block';
     }
 
+    // ---------- patches ----------
     function apply(){
         const L = W.L;
         if (!L || !L.Map) return false;
@@ -704,8 +887,6 @@ function rememberView(){
         const origGetSize = P.getSize;
         P.getSize = function(){ hookMap(this); return origGetSize.call(this); };
 
-        // the page calls fitBounds(zone bounds) when a zone loads: remember those bounds,
-        // and on the first load after a reload use the saved view instead
         const origFit = P.fitBounds;
         P.fitBounds = function(bounds, options){
             hookMap(this);

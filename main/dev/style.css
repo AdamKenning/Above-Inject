@@ -271,9 +271,7 @@ body.anomaly-darkmode #navigation > div > div.navbar-header > a > img{
 }
 
 body.anomaly-darkmode #ak-menu > div:nth-child(2) > div:nth-child(1) > button,
-body.anomaly-darkmode #ak-menu > div:nth-child(2) > div:nth-child(2) > button
-
-{
+body.anomaly-darkmode #ak-menu > div:nth-child(2) > div:nth-child(2) > button{
     filter: invert(1);
 }
 
