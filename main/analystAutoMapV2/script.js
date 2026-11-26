@@ -1,4 +1,4 @@
-const VERSION = "3.1.3";
+const VERSION = "3.1.4";
 
 function keybinds(){
     // Keybind setting
@@ -575,7 +575,7 @@ function rotateMap(){
             if (!dx && !dy) return;
             if (Math.abs(dx) + Math.abs(dy) < this.options.clickTolerance) return;
             const r = rot(dx, dy, -rad());
-            const offset = L.point(r.x / this._parentScale.x, r.y / this._parentScale.y);
+            const offset = L.point(r.x, r.y); // ignore _parentScale: Leaflet measures it from the rotated box, so it's wrong when rotated
             L.DomEvent.preventDefault(e);
             if (!this._moved) {
                 this.fire('dragstart');
