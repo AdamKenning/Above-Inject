@@ -1,4 +1,4 @@
-const VERSION = "3.0.0";
+const VERSION = "3.1.0";
 
 function keybinds(){
     // Keybind setting
@@ -909,3 +909,6 @@ function rememberView(){
     }
 }
 rememberView();
+
+
+
