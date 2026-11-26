@@ -1,4 +1,4 @@
-const VERSION = "3.1.0";
+const VERSION = "3.1.1";
 
 function keybinds(){
     // Keybind setting
@@ -910,5 +910,710 @@ function rememberView(){
 }
 rememberView();
 
+// Move module: reusable "move one defect" using the page's own flow (select defect -> Move -> click target module).
+// Exposed on the page as window.akMove (see API at the bottom). Console shortcut: akMoveModule(source, target, opts)
+function moveModule(){
+    //   source: 'selected' | defect layer | L.LatLng / [lat, lng] (a point inside the defect)
+    //   target: 'left'|'right'|'up'|'down' | { dir, steps } | { cells: [dx, dy] } | { latlng } (module centre to drop on)
+    //   opts:   { dryRun: false } (true = only show the target ring), { quiet: false }
+    //
+    //   returns { ok, reason?, from, to, response? }   (never throws)
+
+    // ---- settings ----
+    const SELECT_TIMEOUT_MS = 3000; // wait for Move button to enable after selecting the defect
+    const MOVE_MODE_DELAY_MS = 100; // pause after pressing Move before clicking the target
+    const SAVE_TIMEOUT_MS = 8000;   // wait for moveDefect.php to answer
+    const SETTLE_MS = 150;          // pause after a save so the page can redraw the moved defect
+    const DEFECT_PANE = 'sgDefectPane';
+    const TABLE_PANE = 'sgTablePane';
+    // ------------------
+
+    const W = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window;
+    let map = null, marker = null, lastClicked = null, queue = Promise.resolve();
+
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const waitFor = async (fn, ms, step = 50) => {
+        const t = Date.now();
+        while (Date.now() - t < ms) { const v = fn(); if (v) return v; await sleep(step); }
+        return null;
+    };
+    const log = (quiet, ...a) => { if (!quiet) console.log('[ak]', ...a); };
+
+    // ---------- map / layers ----------
+    async function getMap(){
+        if (map) return map;
+        W.dispatchEvent(new Event('resize')); // makes Leaflet call getSize (hooked in apply)
+        await sleep(150);
+        if (!map) throw new Error('map not found');
+        return map;
+    }
+    const layersIn = pane => Object.values(map._layers).filter(l => l.options && l.options.pane === pane);
+    const defectLayers = () => layersIn(DEFECT_PANE).filter(l => l.getLatLngs && !l._layers && l._map);
+    const toLatLng = x => W.L.latLng(x);
+
+    // ---------- geometry (layer px: same space as the module grid, rotation-independent) ----------
+    const ringPx = layer => layer.getLatLngs().flat(3).map(ll => map.latLngToLayerPoint(ll));
+
+    function pointInRing(p, ring){
+        let inside = false;
+        for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+            const a = ring[i], b = ring[j];
+            if ((a.y > p.y) !== (b.y > p.y) && p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x) inside = !inside;
+        }
+        return inside;
+    }
+
+    // centre + module edge vectors of a single-module defect
+    function cell(layer){
+        const L = W.L, p = ringPx(layer);
+        const c = p.reduce((a, b) => a.add(b), L.point(0, 0)).divideBy(p.length);
+        const e1 = p[1].subtract(p[0]), e2 = p[p.length - 1].subtract(p[0]);
+        let across = Math.abs(e1.x) > Math.abs(e1.y) ? e1 : e2, up = across === e1 ? e2 : e1;
+        if (across.x < 0) across = across.multiplyBy(-1);
+        if (up.y > 0) up = up.multiplyBy(-1);
+        return { c, across, up, corners: p.length };
+    }
+
+    // defect whose outline contains a lat/lng (works off screen: uses lat/lngs, not drawn paths)
+    function defectAt(latlng){
+        const p = map.latLngToLayerPoint(toLatLng(latlng));
+        return defectLayers().find(l => pointInRing(p, ringPx(l))) || null;
+    }
+    // every defect containing a lat/lng (a module can hold several)
+    function defectsAt(latlng){
+        const p = map.latLngToLayerPoint(toLatLng(latlng));
+        return defectLayers().filter(l => pointInRing(p, ringPx(l)));
+    }
+
+    // table layer under a point (Leaflet hit-test: target must be within the drawn area, i.e. on screen)
+    const tableAt = lp => layersIn(TABLE_PANE).find(l => l._containsPoint && l._containsPoint(lp)) || null;
+
+    const DIR = { left: [-1, 0], right: [1, 0], up: [0, 1], down: [0, -1] };
+    function targetPoint(c, target){
+        if (target && target.latlng) return map.latLngToLayerPoint(toLatLng(target.latlng));
+        let dx, dy;
+        if (typeof target === 'string') [dx, dy] = DIR[target] || [];
+        else if (target && target.dir) { const s = target.steps || 1; const d = DIR[target.dir] || []; dx = d[0] * s; dy = d[1] * s; }
+        else if (target && target.cells) [dx, dy] = target.cells;
+        if (dx === undefined || dy === undefined) return null;
+        return c.c.add(c.across.multiplyBy(dx)).add(c.up.multiplyBy(dy));
+    }
+
+    // ---------- resolving the source ----------
+    function resolveSource(src){
+        if (src === 'selected') {
+            if (lastClicked && !lastClicked._map) lastClicked = null; // moved defects get a new layer
+            return lastClicked;
+        }
+        if (src && src.getLatLngs) return src._map ? src : null;
+        try { return defectAt(src); } catch (_) { return null; }
+    }
+
+    // ---------- page interaction ----------
+    function fireClick(layer, latlng){
+        const lp = map.latLngToLayerPoint(latlng), cp = map.layerPointToContainerPoint(lp);
+        const r = map.getContainer().getBoundingClientRect();
+        const oe = new W.MouseEvent('click', { bubbles: true, clientX: r.left + cp.x, clientY: r.top + cp.y });
+        layer.fire('click', { latlng, layerPoint: lp, containerPoint: cp, originalEvent: oe }, true);
+    }
+
+    function waitForSave(){
+        return new Promise(res => {
+            const $ = W.jQuery;
+            const t = setTimeout(() => { $(W.document).off('ajaxComplete', h); res(null); }, SAVE_TIMEOUT_MS);
+            function h(e, xhr, s){
+                if (!s || !/moveDefect\.php/.test(s.url)) return;
+                clearTimeout(t); $(W.document).off('ajaxComplete', h);
+                res({ status: xhr.status, body: xhr.responseJSON || xhr.responseText, sent: s.data });
+            }
+            $(W.document).on('ajaxComplete', h);
+        });
+    }
+
+    function showRing(latlng, ok){
+        if (marker) marker.remove();
+        marker = W.L.circleMarker(latlng, { radius: 6, color: ok ? '#16a34a' : '#dc2626', weight: 3, fill: false, interactive: false }).addTo(map);
+    }
+    function clearRing(){ if (marker) { marker.remove(); marker = null; } }
+
+    // ---------- the move ----------
+    async function moveOne(source, target, { dryRun = false, quiet = false } = {}){
+        const fail = (reason, extra) => { log(quiet, 'move skipped:', reason); return { ok: false, reason, ...extra }; };
+        try { await getMap(); } catch (e) { return fail('map not found'); }
+
+        const layer = resolveSource(source);
+        if (!layer) return fail(source === 'selected' ? 'no defect clicked' : 'no defect at source');
+
+        const c = cell(layer);
+        if (c.corners !== 4) return fail(`defect has ${c.corners} corners (multi-module): not supported`);
+
+        const tLp = targetPoint(c, target);
+        if (!tLp) return fail('bad target');
+        const from = map.layerPointToLatLng(c.c), to = map.layerPointToLatLng(tLp);
+        const table = tableAt(tLp);
+        showRing(to, !!table);
+        if (!table) return fail('no module under target (off screen or gap)', { from, to });
+        if (dryRun) { log(quiet, 'dry run ok', { from, to }); return { ok: true, dryRun: true, from, to }; }
+
+        // 1. select defect
+        fireClick(layer, from);
+        const moveBtn = await waitFor(() => {
+            const b = W.document.getElementById('Move');
+            return b && !b.disabled && !b.hasAttribute('disabled') && b;
+        }, SELECT_TIMEOUT_MS);
+        if (!moveBtn) { clearRing(); return fail('defect did not select (Move not enabled)', { from, to }); }
+
+        // 2. move mode
+        moveBtn.click();
+        await sleep(MOVE_MODE_DELAY_MS);
+
+        // 3. click target module, wait for the save
+        const saved = waitForSave();
+        fireClick(table, to);
+        const r = await saved;
+        clearRing();
+        if (!r) return fail(`no moveDefect.php response within ${SAVE_TIMEOUT_MS / 1000} s`, { from, to });
+        if (r.status !== 200) return fail(`server returned ${r.status}`, { from, to, response: r });
+
+        if (layer === lastClicked) lastClicked = null;
+        await sleep(SETTLE_MS);
+        log(quiet, 'moved', { from, to, sent: r.sent });
+        return { ok: true, from, to, response: r };
+    }
+
+    // calls are queued so two moves never overlap
+    function moveDefect(source, target, opts){
+        const run = queue.then(() => moveOne(source, target, opts));
+        queue = run.catch(() => {});
+        return run;
+    }
+
+    function apply(){
+        const L = W.L;
+        if (!L || !L.Map || !L.Evented) return false;
+        if (L.Map.prototype._akMoveModule) return true;
+        L.Map.prototype._akMoveModule = true;
+
+        const P = L.Map.prototype, origGetSize = P.getSize;
+        P.getSize = function(){ if (!map) { map = this; W.__akMap = this; } return origGetSize.call(this); };
+
+        // record clicks on individual defect polygons (their LayerGroup doesn't propagate events)
+        const E = L.Evented.prototype, origFire = E.fire;
+        E.fire = function(type){
+            if (type === 'click' && this.options && this.options.pane === DEFECT_PANE && this.getLatLngs && !this._layers) {
+                lastClicked = this;
+                if (this._map && !map) { map = this._map; W.__akMap = map; }
+            }
+            return origFire.apply(this, arguments);
+        };
+
+        // ---- API ----
+        W.akMove = {
+            moveDefect,                                  // (source, target, opts) -> Promise<result>
+            defectAt: ll => (map ? defectAt(ll) : null), // defect layer containing a lat/lng
+            defectsAt: ll => (map ? defectsAt(ll) : []), // all defect layers containing a lat/lng
+            cell: l => cell(l),                          // { c, across, up, corners } in layer px
+            defectLayers: () => (map ? defectLayers() : []),
+            tableAt: ll => (map ? tableAt(map.latLngToLayerPoint(toLatLng(ll))) : null),
+            selected: () => resolveSource('selected'),
+            getMap,
+        };
+        W.akMoveModule = moveDefect; // console shortcut
+        return true;
+    }
+
+    if (!apply()) {
+        const t = setInterval(() => { if (apply()) clearInterval(t); }, 100);
+        setTimeout(() => clearInterval(t), 30000);
+    }
+}
+moveModule();
+
+// Grid move. Move a selection of modules at a time. Needs moveModule() loaded first (uses window.akMove).
+function moveGrid(){
+    //   G        enter grid mode: next click = first corner (anchor)
+    //   hover    live preview: red outline + ✕ on every module of the block
+    //   click    second corner; the block is normalised so the anchor is always its bottom-left.
+    //            Checked, then ✕ stays only on modules that hold a defect (= what would be moved); red outline stays.
+    //   Esc      cancel / clear
+
+    // ---- settings ----
+    const KEY = 'g';
+    const MAX_CELLS = 2000;        // refuse silly grids
+    const MAX_PREVIEW_X = 400;     // above this many cells the hover preview shows the outline only
+    const TOAST_MS = 2200;
+    const TABLE_PANE = 'sgTablePane';
+    const MARK_PANE = 'akGridPane'; // our own pane above the defects
+    const RED = '#dc2626';
+    const GREEN = '#16a34a';
+    // ------------------
+
+    const W = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window;
+    let map = null, marks = null, preview = null, toastEl = null, toastTimer = null;
+    let mode = 'off';              // off | anchor | extent | source-set
+    let grid = null;               // see onFirstClick / onSecondClick
+    let lastPreviewKey = null;
+
+    // ---------- small helpers ----------
+    function toast(msg, isError){
+        if (!toastEl) {
+            toastEl = document.createElement('div');
+            toastEl.style.cssText = `position:fixed; left:50%; bottom:40px; transform:translateX(-50%); z-index:1000003;
+                padding:8px 16px; border-radius:6px; font:600 14px/1.3 Arial,sans-serif; color:#fff;
+                pointer-events:none; opacity:0; transition:opacity .15s ease; max-width:80vw; text-align:center;`;
+            document.body.appendChild(toastEl);
+        }
+        toastEl.textContent = msg;
+        toastEl.style.background = isError ? 'rgba(220,38,38,.92)' : 'rgba(0,0,0,.75)';
+        toastEl.style.opacity = '1';
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { toastEl.style.opacity = '0'; }, TOAST_MS);
+    }
+
+    const svgCursor = (body, hx, hy) =>
+        `url("data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'>${body}</svg>`)}") ${hx} ${hy}, crosshair`;
+    const anchorSvg = col => `<g fill='none' stroke='${col}' stroke-width='2.4' stroke-linecap='round'><circle cx='14' cy='5' r='2.6'/><line x1='14' y1='7.6' x2='14' y2='24'/><line x1='9' y1='11' x2='19' y2='11'/><path d='M5 17 Q6 24 14 24 Q22 24 23 17'/></g>`;
+    const ANCHOR_SVG = anchorSvg(RED);
+    const ANCHOR_GREEN_SVG = anchorSvg(GREEN);
+    const DOT_SVG = `<circle cx='14' cy='14' r='6' fill='${GREEN}' stroke='#fff' stroke-width='1.5'/>`;
+    const X_SVG = `<g stroke='${RED}' stroke-width='3.2' stroke-linecap='round'><line x1='7' y1='7' x2='21' y2='21'/><line x1='21' y1='7' x2='7' y2='21'/></g>`;
+    const X_FAINT_SVG = `<g stroke='${RED}' stroke-opacity='.55' stroke-width='2.6' stroke-linecap='round'><line x1='8' y1='8' x2='20' y2='20'/><line x1='20' y1='8' x2='8' y2='20'/></g>`;
+    const BAD_SVG = `<circle cx='14' cy='14' r='6' fill='#f59e0b'/>`;
+
+    const style = document.createElement('style');
+    style.textContent = `
+        .ak-grid-anchor, .ak-grid-anchor * { cursor: ${svgCursor(ANCHOR_SVG, 14, 14)} !important; }
+        .ak-grid-extent, .ak-grid-extent * { cursor: ${svgCursor(X_SVG, 14, 14)} !important; }
+        .ak-grid-dest, .ak-grid-dest * { cursor: ${svgCursor(ANCHOR_GREEN_SVG, 14, 14)} !important; }
+        .ak-grid-mark { pointer-events: none; }
+    `;
+    document.head.appendChild(style);
+
+    function setMode(m){
+        mode = m;
+        const c = map && map.getContainer();
+        if (!c) return;
+        c.classList.toggle('ak-grid-anchor', m === 'anchor');
+        c.classList.toggle('ak-grid-extent', m === 'extent');
+        c.classList.toggle('ak-grid-dest', m === 'dest');
+        if (m !== 'extent' && m !== 'dest') clearPreview();
+    }
+
+    // ---------- geometry (layer px) ----------
+    const L = () => W.L;
+    const ringPx = layer => layer.getLatLngs().flat(3).map(ll => map.latLngToLayerPoint(ll));
+    const dot = (a, b) => a.x * b.x + a.y * b.y;
+    const len = a => Math.hypot(a.x, a.y);
+
+    function pointInRing(p, ring){
+        let inside = false;
+        for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+            const a = ring[i], b = ring[j];
+            if ((a.y > p.y) !== (b.y > p.y) && p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x) inside = !inside;
+        }
+        return inside;
+    }
+
+    const tables = () => Object.values(map._layers).filter(l => l.options && l.options.pane === TABLE_PANE && l.getLatLngs && !l._layers);
+    const tableAtPx = p => tables().find(t => pointInRing(p, ringPx(t))) || null;
+
+    // module size/orientation: taken from the nearest single-module defect
+    function moduleVectors(nearPx){
+        const ds = W.akMove.defectLayers().map(l => ({ l, c: W.akMove.cell(l) })).filter(d => d.c.corners === 4);
+        if (!ds.length) return null;
+        ds.sort((a, b) => a.c.c.distanceTo(nearPx) - b.c.c.distanceTo(nearPx));
+        return { across: ds[0].c.across, up: ds[0].c.up };
+    }
+
+    // table's bottom-left corner in module axes
+    function tableOrigin(tbl, v){
+        const p = ringPx(tbl), ua = v.across.divideBy(len(v.across)), uu = v.up.divideBy(len(v.up));
+        let best = null;
+        for (const q of p) { const s = dot(q, ua) + dot(q, uu); if (!best || s < best.s) best = { q, s }; }
+        return best.q;
+    }
+
+    // snap a layer-px point to the centre of the module it's on
+    function snapModule(p, v){
+        const tbl = tableAtPx(p);
+        if (!tbl) return null;
+        const o = tableOrigin(tbl, v);
+        const d = p.subtract(o);
+        const la = len(v.across), lu = len(v.up);
+        const i = Math.floor(dot(d, v.across) / (la * la));
+        const j = Math.floor(dot(d, v.up) / (lu * lu));
+        const c = o.add(v.across.multiplyBy(i + 0.5)).add(v.up.multiplyBy(j + 0.5));
+        if (!pointInRing(c, ringPx(tbl))) return null;
+        return { tbl, c };
+    }
+
+    // current module vectors (rescaled if zoom changed since they were measured)
+    function vecs(){
+        const k = map.getZoomScale(map.getZoom(), grid.z);
+        return { across: grid.across.multiplyBy(k), up: grid.up.multiplyBy(k) };
+    }
+
+    // block between the first corner and point c (both module centres), normalised to bottom-left origin
+    function blockBetween(c){
+        const { across, up } = vecs();
+        const A = map.latLngToLayerPoint(grid.first);
+        const d = c.subtract(A);
+        const dx = Math.round(dot(d, across) / dot(across, across));
+        const dy = Math.round(dot(d, up) / dot(up, up));
+        const origin = A.add(across.multiplyBy(Math.min(0, dx))).add(up.multiplyBy(Math.min(0, dy)));
+        // ai/aj: where the anchor (first click) sits inside the block
+        return { origin, nx: Math.abs(dx) + 1, ny: Math.abs(dy) + 1, ai: Math.max(0, -dx), aj: Math.max(0, -dy), across, up };
+    }
+    const cellPx = (b, i, j) => b.origin.add(b.across.multiplyBy(i)).add(b.up.multiplyBy(j));
+    function outlineLatLngs(b){
+        const h = (fi, fj) => map.layerPointToLatLng(cellPx(b, fi, fj));
+        return [h(-0.5, -0.5), h(b.nx - 0.5, -0.5), h(b.nx - 0.5, b.ny - 0.5), h(-0.5, b.ny - 0.5)];
+    }
+
+    // ---------- markers ----------
+    function ensureLayers(){
+        if (!map.getPane(MARK_PANE)) {
+            const p = map.createPane(MARK_PANE);
+            p.style.zIndex = 690;
+            p.style.pointerEvents = 'none';
+        }
+        if (!marks) marks = L().layerGroup().addTo(map);
+        if (!preview) preview = L().layerGroup().addTo(map);
+    }
+    const iconCache = {};
+    const icon = (svg, size) => iconCache[svg + size] || (iconCache[svg + size] = L().divIcon({
+        className: 'ak-grid-mark', iconSize: [size, size], iconAnchor: [size / 2, size / 2],
+        html: `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 28 28">${svg}</svg>`,
+    }));
+    function mark(group, latlng, svg, size = 20){
+        ensureLayers();
+        L().marker(latlng, { icon: icon(svg, size), pane: MARK_PANE, interactive: false, keyboard: false }).addTo(group);
+    }
+    function outline(group, b, dashed, col = RED){
+        ensureLayers();
+        L().polygon(outlineLatLngs(b), {
+            pane: MARK_PANE, interactive: false, color: col, weight: 2.5, fill: true, fillColor: col, fillOpacity: 0.06,
+            dashArray: dashed ? '6 5' : null,
+        }).addTo(group);
+    }
+    const clearMarks = () => { if (marks) marks.clearLayers(); };
+    const clearPreview = () => { if (preview) preview.clearLayers(); lastPreviewKey = null; };
+
+    // ---------- flow ----------
+    function cancel(msg){
+        setMode('off'); grid = null; clearMarks(); clearPreview();
+        W.akGrid = null;
+        if (msg) toast(msg);
+    }
+
+    function onFirstClick(latlng){
+        const p = map.latLngToLayerPoint(latlng);
+        const v = moduleVectors(p);
+        if (!v) { cancel(); toast('Grid move: no single-module defect on the map to measure module size from', true); return; }
+        const s = snapModule(p, v);
+        if (!s) { cancel(); toast('Grid move: that isn\'t a module (cancelled)', true); return; }
+        grid = { first: map.layerPointToLatLng(s.c), across: v.across, up: v.up, z: map.getZoom() };
+        clearMarks();
+        mark(marks, grid.first, ANCHOR_SVG, 24);
+        setMode('extent');
+        toast('First corner set: click the opposite corner of the block');
+    }
+
+    // hover preview (UI only)
+    let rafPending = false, lastMove = null;
+    function onMove(e){
+        if ((mode !== 'extent' && mode !== 'dest') || !inMap(e)) return;
+        lastMove = e;
+        if (rafPending) return;
+        rafPending = true;
+        requestAnimationFrame(() => {
+            rafPending = false;
+            if (mode === 'extent') drawPreview(lastMove); else if (mode === 'dest') drawDestPreview(lastMove);
+        });
+    }
+
+    // destination preview (UI only): green outline + green anchor; green dot where each defect would land on a module,
+    // red ✕ where it would land off a module. Off a module the outline just follows the cursor.
+    // destination block whose anchor cell (ai, aj) lands on point a
+    function destBlock(a){
+        const { across, up } = vecs();
+        return { origin: a.subtract(across.multiplyBy(grid.ai)).subtract(up.multiplyBy(grid.aj)), nx: grid.nx, ny: grid.ny, across, up };
+    }
+    function drawDestPreview(e){
+        if (mode !== 'dest' || !grid) return;
+        const raw = map.latLngToLayerPoint(map.mouseEventToLatLng(e));
+        const s = snapModule(raw, vecs());
+        const { across, up } = vecs();
+        const a = s ? s.c : raw;  // destination anchor; block sits around it like the source does
+        const b = destBlock(a);
+        const key = s ? `${Math.round(s.c.x)},${Math.round(s.c.y)}` : 'raw';
+        if (s && key === lastPreviewKey) return;
+        clearPreview();
+        lastPreviewKey = key;
+        outline(preview, b, true, GREEN);
+        mark(preview, map.layerPointToLatLng(a), ANCHOR_GREEN_SVG, 24);
+        if (!s) return;
+        for (const d of grid.defects) {
+            const p = cellPx(b, d.i, d.j);
+            mark(preview, map.layerPointToLatLng(p), tableAtPx(p) ? DOT_SVG : X_SVG, tableAtPx(p) ? 14 : 18);
+        }
+    }
+
+    function onDestClick(latlng){
+        const s = snapModule(map.latLngToLayerPoint(latlng), vecs());
+        if (!s) { toast('Grid move: pick a module for the destination anchor', true); return; }
+        const { across, up } = vecs();
+        const b = destBlock(s.c);
+        const targets = grid.defects.map(d => {
+            const p = cellPx(b, d.i, d.j);
+            return { ...d, to: map.layerPointToLatLng(p), ok: !!tableAtPx(p) };
+        });
+        grid.dest = { anchor: map.layerPointToLatLng(s.c), outline: outlineLatLngs(b), targets };
+        const bad = targets.filter(t => !t.ok).length;
+        // keep the destination drawn (solid) next to the source
+        clearPreview();
+        outline(marks, b, false, GREEN);
+        mark(marks, grid.dest.anchor, ANCHOR_GREEN_SVG, 24);
+        targets.forEach(t => mark(marks, t.to, t.ok ? DOT_SVG : X_SVG, t.ok ? 14 : 18));
+        setMode('dest-set');
+        const good = targets.filter(t => t.ok);
+        if (!good.length) { cancel(); toast('Grid move: no defect would land on a module (cancelled)', true); return; }
+        // let the markers paint before the blocking confirm dialog
+        setTimeout(() => {
+            if (mode !== 'dest-set') return;
+            const msg = `Move ${good.length} defect${good.length === 1 ? '' : 's'} to the green block?` +
+                (bad ? `\n\n${bad} defect${bad === 1 ? '' : 's'} would land off a module and will be skipped.` : '') +
+                '\n\nThis saves each move to the database. When it finishes you can undo the whole move in one click.';
+            if (!W.confirm(msg)) { cancel('Grid move cancelled'); return; }
+            runMoves(b);
+        }, 50);
+    }
+
+    // ---------- run ----------
+    let abort = false, guardOpen = false, passThrough = false;
+
+
+    // plan: [{ from: latlng, to: latlng, n?: max defects to take from this module }], run in order
+    async function runPlan(plan, label){
+        const mover = W.akMove;
+        setMode('running'); abort = false;
+        W.addEventListener('beforeunload', onUnload);
+        const done = [];   // what actually moved, per module (used for undo)
+        let moved = 0, failed = 0, k = 0;
+        for (const s of plan) {
+            k++;
+            let here = 0;
+            // keep moving until the module is empty: stacked defects may only get their own layer after the one above moves
+            for (let guard = 0; guard < 20 && !abort && (s.n === undefined || here < s.n); guard++) {
+                const layer = mover.defectsAt(s.from)[0];
+                if (!layer) break;
+                toast(`${label}: module ${k} of ${plan.length}, ${moved} moved…`);
+                const r = await mover.moveDefect(layer, { latlng: s.to }, { quiet: true });
+                if (r.ok) { moved++; here++; }
+                else { failed++; console.warn('[ak] grid move skipped', r.reason, s); break; }
+            }
+            if (here) done.push({ from: s.from, to: s.to, n: here });
+            if (abort) break;
+        }
+        W.removeEventListener('beforeunload', onUnload);
+
+        return { moved, failed, stopped: abort, done };
+    }
+
+    async function runMoves(b){
+        if (!W.akMove) { cancel(); toast('Grid move: moveModule not loaded', true); return; }
+        // order so nothing lands on a defect that hasn't moved yet: furthest along the shift goes first
+        const shift = b.origin.subtract(map.latLngToLayerPoint(grid.origin));
+        const along = t => { const p = map.latLngToLayerPoint(t.ll); return p.x * shift.x + p.y * shift.y; };
+        const plan = [];  // one entry per module (stacked defects share a cell)
+        for (const t of grid.dest.targets.filter(t => t.ok).sort((a, c) => along(c) - along(a)))
+            if (!plan.some(c => c.i === t.i && c.j === t.j)) plan.push({ i: t.i, j: t.j, from: t.ll, to: t.to });
+
+        const r = await runPlan(plan, 'Moving');
+        // record of this run: source/dest grids + what moved where (also on window.akGridLast)
+        const record = { source: grid.outline, dest: grid.dest.outline, moves: r.done, at: new Date() };
+        W.akGridLast = record;
+        cancel();
+        if (!r.moved) { toast(`Nothing moved${r.failed ? `, ${r.failed} failed (see console)` : ''}`, true); return; }
+        showResult(record, `Moved ${r.moved} defect${r.moved === 1 ? '' : 's'}` +
+            (r.failed ? `, ${r.failed} failed (see console)` : '') + (r.stopped ? ', stopped early' : '') + '.');
+    }
+
+    // after a run: keep, or undo by replaying the record backwards (dest -> source, reverse order)
+    async function showResult(record, summary){
+        clearMarks(); ensureLayers();
+        const poly = (ll, col) => L().polygon(ll, { pane: MARK_PANE, interactive: false, color: col, weight: 2.5, fillColor: col, fillOpacity: 0.06 }).addTo(marks);
+        poly(record.source, RED); poly(record.dest, GREEN);
+        await new Promise(r => setTimeout(r, 50));   // let the outlines paint before the blocking dialog
+        const keep = W.confirm(`${summary}\n\nKeep these moves?\n\nOK = keep\nCancel = undo (move everything back)`);
+        if (keep) { clearMarks(); toast(`Kept. ${summary}`); return; }
+
+        const back = record.moves.slice().reverse().map(m => ({ from: m.to, to: m.from, n: m.n }));
+        const r = await runPlan(back, 'Undoing');
+        clearMarks(); setMode('off');
+        toast(`Undone: ${r.moved} defect${r.moved === 1 ? '' : 's'} moved back` +
+            (r.failed ? `, ${r.failed} failed (see console)` : '') + (r.stopped ? ', stopped early' : ''), !!(r.failed || r.stopped));
+    }
+
+    // ---------- interruption guard (only while moving) ----------
+    function onUnload(e){ e.preventDefault(); e.returnValue = ''; return ''; }
+    const isReload = e => e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r');
+    // returns true when the key was caught
+    function guardKey(e){
+        if (passThrough || !(e.key === 'Escape' || e.key === ' ' || isReload(e))) return false;
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        if (e.type !== 'keydown' || e.repeat || guardOpen) return true;
+        guardOpen = true;
+        const what = e.key === 'Escape' ? 'Stop' : e.key === ' ' ? 'Stop (Space)' : 'Reload';
+        const copy = { key: e.key, code: e.code, keyCode: e.keyCode, which: e.which, bubbles: true, cancelable: true };
+        const target = e.target;
+        setTimeout(() => {   // out of the key handler so the dialog doesn't swallow the keyup oddly
+            const stop = W.confirm('Moving in progress.\n\nInterrupting now means you may not be able to undo. ' +
+                'Let it finish and you can undo everything at the end.\n\n' +
+                `OK = ${what.toLowerCase()} anyway\nCancel = keep moving`);
+            guardOpen = false;
+            if (!stop || mode !== 'running') return;
+            abort = true;
+            if (what === 'Reload') { W.removeEventListener('beforeunload', onUnload); W.location.reload(); return; }
+            toast('Stopping after the current move…', true);
+            if (e.key === ' ') {   // hand the Space press on to the page
+                passThrough = true;
+                try { target.dispatchEvent(new KeyboardEvent('keydown', copy)); } finally { passThrough = false; }
+            }
+        });
+        return true;
+    }
+    function drawPreview(e){
+        if (mode !== 'extent' || !grid) return;
+        const p = map.latLngToLayerPoint(map.mouseEventToLatLng(e));
+        const s = snapModule(p, vecs());
+        if (!s) {
+            if (lastPreviewKey) { clearPreview(); clearMarks(); mark(marks, grid.first, ANCHOR_SVG, 24); }
+            return;
+        }
+        const b = blockBetween(s.c);
+        const key = `${Math.round(b.origin.x)},${Math.round(b.origin.y)},${b.nx},${b.ny}`;
+        if (key === lastPreviewKey) return;
+        clearPreview();
+        lastPreviewKey = key;
+        outline(preview, b, true);
+        if (b.nx * b.ny <= MAX_PREVIEW_X) {
+            for (let j = 0; j < b.ny; j++) for (let i = 0; i < b.nx; i++) {
+                if (i === b.ai && j === b.aj) continue; // anchor cell
+                mark(preview, map.layerPointToLatLng(cellPx(b, i, j)), X_FAINT_SVG, 16);
+            }
+        }
+        // anchor stays on the first module clicked
+        clearMarks();
+        mark(marks, grid.first, ANCHOR_SVG, 24);
+    }
+
+    function onSecondClick(latlng){
+        const p = map.latLngToLayerPoint(latlng);
+        const s = snapModule(p, vecs());
+        if (!s) { toast('Grid move: that isn\'t a module: pick the opposite corner again', true); return; }
+        const b = blockBetween(s.c);
+        if (b.nx * b.ny > MAX_CELLS) { toast(`Grid move: too big (${b.nx * b.ny} modules)`, true); return; }
+
+        // every cell centre must land on a module
+        const cells = [], missing = [];
+        for (let j = 0; j < b.ny; j++) for (let i = 0; i < b.nx; i++) {
+            const c = cellPx(b, i, j);
+            (tableAtPx(c) ? cells : missing).push({ i, j, ll: map.layerPointToLatLng(c) });
+        }
+        clearPreview();
+        if (missing.length) {
+            toast(`Grid move: ${missing.length} of ${b.nx * b.ny} cells have no module under them: pick a different corner`, true);
+            missing.forEach(m => mark(preview, m.ll, BAD_SVG, 12));
+            setTimeout(() => { if (mode === 'extent') clearPreview(); }, 1500);
+            return;
+        }
+
+        // keep ✕ only on modules that hold a defect
+        const defects = [];
+        for (const c of cells) {
+            for (const d of W.akMove.defectsAt(c.ll))   // a module can hold several defects: take them all
+                if (W.akMove.cell(d).corners === 4 && !defects.some(x => x.layer === d)) defects.push({ ...c, layer: d });
+        }
+
+        grid.anchor = grid.first;                        // anchor never moves
+        grid.origin = map.layerPointToLatLng(b.origin);  // bottom-left cell (internal)
+        grid.ai = b.ai; grid.aj = b.aj;
+        grid.nx = b.nx; grid.ny = b.ny;
+        grid.cells = cells;
+        grid.defects = defects;
+        grid.outline = outlineLatLngs(b);
+
+        clearMarks();
+        outline(marks, b, false);
+        defects.forEach(d => (d.i !== b.ai || d.j !== b.aj) && mark(marks, d.ll, X_SVG, 18)); // anchor cell keeps just the anchor
+        mark(marks, grid.anchor, ANCHOR_SVG, 24);
+        setMode('dest');
+        toast(`Source block: ${b.nx} × ${b.ny} modules, ${defects.length} defect${defects.length === 1 ? '' : 's'}. Now click the destination anchor`);
+        W.akGrid = grid; // for console inspection
+    }
+
+    // ---------- input ----------
+    let downAt = null;
+    function inMap(e){
+        const c = map && map.getContainer();
+        return c && e.target && c.contains(e.target) && !(e.target.closest && e.target.closest('.leaflet-control-container'));
+    }
+
+    const picking = () => mode === 'anchor' || mode === 'extent' || mode === 'dest';
+    function onDown(e){ if (picking()) downAt = { x: e.clientX, y: e.clientY }; }
+
+    function onClick(e){
+        if (!picking() || !inMap(e)) return;
+        e.stopPropagation(); e.preventDefault();            // keep the page from selecting things
+        if (downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 5) return; // was a pan
+        const ll = map.mouseEventToLatLng(e);               // rotation-aware (rotateMap patches this)
+        if (mode === 'anchor') onFirstClick(ll);
+        else if (mode === 'extent') onSecondClick(ll);
+        else onDestClick(ll);
+    }
+
+    function onKey(e){
+        const a = document.activeElement;
+        if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable)) return;
+        if (mode === 'running') {
+            guardKey(e);
+            return;
+        }
+        if (e.key === 'Escape' && mode !== 'off') { e.preventDefault(); cancel('Grid move cancelled'); return; }
+        if (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey || e.repeat) return;
+        if (e.key.toLowerCase() !== KEY) return;
+        e.preventDefault(); e.stopPropagation();
+        if (!map) { toast('Grid move: map not ready', true); return; }
+        clearMarks(); clearPreview(); grid = null;
+        setMode('anchor');
+        toast('Grid move: click the first corner module of the block');
+    }
+
+    let started = false;
+    async function init(){
+        if (started) return true;
+        if (!W.akMove || !W.L) return false;
+        try { map = await W.akMove.getMap(); } catch (_) { return false; }
+        if (started) return true;
+        started = true;
+        document.addEventListener('keydown', onKey, true);
+        W.addEventListener('keydown', e => { if (mode === 'running') guardKey(e); }, true); // window capture: before the page's own handlers
+        W.addEventListener('keyup', e => { if (mode === 'running') guardKey(e); }, true);
+        W.addEventListener('keypress', e => { if (mode === 'running') guardKey(e); }, true);
+        document.addEventListener('mousedown', onDown, true);
+        document.addEventListener('mousemove', onMove, true);
+        document.addEventListener('click', onClick, true);
+        document.addEventListener('dblclick', e => { if (picking() && inMap(e)) { e.stopPropagation(); e.preventDefault(); } }, true);
+        return true;
+    }
+
+    let tries = 0;
+    const t = setInterval(async () => {
+        if (++tries > 60) return clearInterval(t);
+        if (await init()) clearInterval(t);
+    }, 500);
+}
+moveGrid();
 
 
