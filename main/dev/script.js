@@ -1,4 +1,4 @@
-const VERSION = "3.1.1";
+const VERSION = "3.1.2";
 
 function keybinds(){
     // Keybind setting
@@ -1129,7 +1129,7 @@ function moveModule(){
 }
 moveModule();
 
-// Grid move. Move a selection of modules at a time. Needs moveModule() loaded first (uses window.akMove).
+// Grid move (step 1: source selection). Needs moveModule() loaded first (uses window.akMove).
 function moveGrid(){
     //   G        enter grid mode: next click = first corner (anchor)
     //   hover    live preview: red outline + ✕ on every module of the block
@@ -1364,6 +1364,11 @@ function moveGrid(){
         if (!s) { toast('Grid move: pick a module for the destination anchor', true); return; }
         const { across, up } = vecs();
         const b = destBlock(s.c);
+        // destination exactly on top of the source would move every defect onto itself forever
+        const src0 = map.latLngToLayerPoint(grid.origin);
+        if (b.origin.distanceTo(src0) < 0.5 * Math.min(across.distanceTo([0, 0]), up.distanceTo([0, 0]))) {
+            toast('Grid move: destination is the same as the source: pick a different module', true); return;
+        }
         const targets = grid.defects.map(d => {
             const p = cellPx(b, d.i, d.j);
             return { ...d, to: map.layerPointToLatLng(p), ok: !!tableAtPx(p) };
@@ -1468,9 +1473,10 @@ function moveGrid(){
         const copy = { key: e.key, code: e.code, keyCode: e.keyCode, which: e.which, bubbles: true, cancelable: true };
         const target = e.target;
         setTimeout(() => {   // out of the key handler so the dialog doesn't swallow the keyup oddly
-            const stop = W.confirm('Moving in progress.\n\nInterrupting now means you may not be able to undo. ' +
+            // OK (the default) is the safe choice: keep moving
+            const stop = !W.confirm('Moving in progress.\n\nInterrupting now means you may not be able to undo. ' +
                 'Let it finish and you can undo everything at the end.\n\n' +
-                `OK = ${what.toLowerCase()} anyway\nCancel = keep moving`);
+                `OK = keep moving\nCancel = ${what.toLowerCase()} anyway`);
             guardOpen = false;
             if (!stop || mode !== 'running') return;
             abort = true;
@@ -1615,5 +1621,3 @@ function moveGrid(){
     }, 500);
 }
 moveGrid();
-
-
