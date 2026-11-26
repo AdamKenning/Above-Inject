@@ -318,5 +318,5 @@ body.anomaly-darkmode path[fill="#ffeb3b"]{fill-opacity: 0.4;}
 /* Missing Module Exception (Because they Invisible) */
 body.anomaly-darkmode path[fill="#1F2937"]{filter: invert(1) brightness(1.5);}
 
-/* For Grid Move */
-body.anomaly-darkmode .ak-grid-mark{filter: invert(1);}
+/* For Block Move */
+body.anomaly-darkmode .ak-block-mark{filter: invert(1);}
